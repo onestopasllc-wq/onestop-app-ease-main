@@ -1,0 +1,13 @@
+project_id = "kplswctyghzvvpgrqamk"
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.send-confirmation-email]
+verify_jwt = false
+
+[functions.send-contact-email]
+verify_jwt = false
+
+[functions.send-whatsapp-notification]
+verify_jwt = false
