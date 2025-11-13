@@ -52,9 +52,13 @@ CREATE POLICY "Admins can manage blocked dates"
 
 -- Insert default working hours (Monday-Friday, 9 AM - 5 PM, 30-minute slots)
 INSERT INTO public.working_hours (day_of_week, start_time, end_time, slot_duration) VALUES
-  (1, '09:00', '17:00', 30),
-  (2, '09:00', '17:00', 30),
-  (3, '09:00', '17:00', 30),
-  (4, '09:00', '17:00', 30),
-  (5, '09:00', '17:00', 30)
+
+  (0, '07:00', '11:00', 30),
+  (1, '07:00', '11:00', 30),
+  (2, '07:00', '11:00', 30),
+  (3, '07:00', '11:00', 30),
+  (4, '07:00', '11:00', 30),
+  (5, '07:00', '11:00', 30),
+  (6, '07:00', '11:00', 30)
+
 ON CONFLICT DO NOTHING;

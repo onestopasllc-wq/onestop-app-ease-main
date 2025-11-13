@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { 
@@ -90,6 +91,9 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [filterService, setFilterService] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
@@ -253,6 +257,59 @@ const Admin = () => {
 
     setFilteredAppointments(filtered);
   }, [filterService, filterDate, appointments]);
+
+  const isAllSelected = filteredAppointments.length > 0 && filteredAppointments.every(apt => selectedIds.has(apt.id));
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (checked?: boolean) => {
+    setSelectedIds(prev => {
+      // if explicit checked value provided, use it; otherwise toggle based on current state
+      const selectAll = typeof checked === 'boolean' ? checked : !isAllSelected;
+      if (!selectAll) return new Set();
+      return new Set(filteredAppointments.map(a => a.id));
+    });
+  };
+
+  const deleteSelected = async (ids?: string[]) => {
+    const targetIds = ids ?? Array.from(selectedIds);
+    if (targetIds.length === 0) return { success: false, message: 'No appointments selected' };
+
+    setDeleting(true);
+    try {
+      // Request deleted rows back so we can verify deletion succeeded
+      const { data: deleted, error } = await supabase
+        .from('appointments')
+        .delete()
+        .in('id', targetIds)
+        .select('*');
+
+      if (error) {
+        console.error('Delete error', error);
+        return { success: false, message: error.message };
+      }
+
+      // If no rows returned, deletion may have been blocked by RLS or not found
+      if (!deleted || deleted.length === 0) {
+        return { success: false, message: 'No rows deleted. Check permissions or IDs.' };
+      }
+
+      // Refresh UI
+      await fetchAppointments();
+      await fetchStats();
+      setSelectedIds(new Set());
+      return { success: true, message: `Deleted ${deleted.length} appointment(s)` };
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     // Validate input
@@ -695,10 +752,69 @@ const Admin = () => {
 
                   {/* Table */}
                   <div className="rounded-lg border bg-card/50 backdrop-blur overflow-hidden shadow-lg">
+                    {/* Selection toolbar */}
+                    {selectedIds.size > 0 && (
+                      <div className="flex items-center justify-between p-3 border-b bg-background/60">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="hover-lift">
+                            Deselect
+                          </Button>
+                        </div>
+                        <div>
+                          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                            <DialogTrigger asChild>
+                              <Button variant="destructive" className="shadow-md">
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Confirm deletion</DialogTitle>
+                                <DialogDescription>You're about to delete {selectedIds.size} appointment(s). This action cannot be undone.</DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-2 py-4 max-h-40 overflow-auto">
+                                {filteredAppointments.filter(a => selectedIds.has(a.id)).map(a => (
+                                  <div key={a.id} className="flex items-center justify-between p-2 rounded-md bg-muted/10">
+                                    <div>
+                                      <div className="font-medium">{a.full_name}</div>
+                                      <div className="text-sm text-muted-foreground">{a.appointment_date} {a.appointment_time}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={async () => {
+                                    const result = await deleteSelected();
+                                    if (result.success) {
+                                      toast.success(result.message);
+                                      setShowDeleteDialog(false);
+                                    } else {
+                                      toast.error(result.message);
+                                    }
+                                  }}
+                                  disabled={deleting}
+                                >
+                                  {deleting ? 'Deleting...' : `Delete ${selectedIds.size}`}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    )}
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-12">
+                              <div className="flex items-center justify-center">
+                                <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} />
+                              </div>
+                            </TableHead>
                             <TableHead>Date & Time</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Contact</TableHead>
@@ -711,6 +827,11 @@ const Admin = () => {
                         <TableBody>
                           {filteredAppointments.map((apt) => (
                             <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors">
+                            <TableCell className="w-12">
+                              <div className="flex items-center justify-center">
+                                <Checkbox checked={selectedIds.has(apt.id)} onCheckedChange={() => toggleSelect(apt.id)} />
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -813,6 +934,20 @@ const Admin = () => {
                                     className="shadow-md hover-lift"
                                   >
                                     <Mail className="h-4 w-4" />
+                                  </Button>
+                                </motion.div>
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      // select this single appointment and open confirm dialog
+                                      setSelectedIds(new Set([apt.id]));
+                                      setShowDeleteDialog(true);
+                                    }}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </motion.div>
                               </div>

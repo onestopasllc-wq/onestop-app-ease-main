@@ -3,15 +3,27 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// NOTE:
+// - Vite's `import.meta.env` values are embedded at build time.
+// - Creating a Supabase client that references `localStorage` at module
+//   top-level will throw during server-side execution (Node) because
+//   `localStorage` and `window` are undefined. That can crash server
+//   renders and cause a white screen after deployment.
+//
+// To avoid runtime errors during SSR we only reference `localStorage`
+// when running in the browser. Also keep a sensible fallback for
+// missing env vars (they should be set in Vercel's dashboard).
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '';
 
+const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+// Create the client. We only set the `storage` option when running in
+// the browser so imports are safe during SSR/build/runtime on Vercel.
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: isBrowser ? localStorage : undefined,
     persistSession: true,
     autoRefreshToken: true,
   }
