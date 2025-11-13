@@ -2,27 +2,15 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-// Types matching your database schema
-interface Appointment {
-  id: string;
-  full_name: string;
-  email: string;
-  phone: string | null;
-  appointment_date: string;
-  appointment_time: string;
-  services: string[];
-  description: string | null;
-  payment_status: string | null;
-  status: string;
-  stripe_session_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// Initialize Stripe
+// This is your Stripe secret key - use environment variables!
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover' as any,
 });
+
+// Replace this endpoint secret with your endpoint's unique secret
+// If you are testing with the CLI, find the secret by running 'stripe listen'
+// If you are using an endpoint defined with the API or dashboard, look in your webhook settings
+const endpointSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET!;
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
@@ -30,7 +18,75 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Helper to get raw body for signature verification
+export default async function handler(
+  request: VercelRequest,
+  response: VercelResponse
+) {
+  // Only verify the event if you have an endpoint secret defined
+  if (endpointSecret) {
+    // Get the signature sent by Stripe
+    const signature = request.headers['stripe-signature'] as string;
+    
+    if (!signature) {
+      console.log('⚠️ No Stripe signature provided');
+      return response.status(400).send('No Stripe signature provided');
+    }
+
+    let event: Stripe.Event;
+    const rawBody = await getRawBody(request);
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        endpointSecret
+      );
+      console.log('✅ Webhook signature verified:', event.type);
+    } catch (err: any) {
+      console.log(`⚠️ Webhook signature verification failed.`, err.message);
+      return response.status(400).send(`Webhook signature verification failed: ${err.message}`);
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const checkoutSession = event.data.object;
+        console.log(`💰 Checkout Session for ${checkoutSession.amount_total} was successful!`);
+        await handleCheckoutSessionCompleted(checkoutSession);
+        break;
+      case 'checkout.session.expired':
+        const expiredSession = event.data.object;
+        console.log(`⏰ Checkout Session expired: ${expiredSession.id}`);
+        await handleCheckoutSessionExpired(expiredSession);
+        break;
+      case 'payment_intent.succeeded':
+        const paymentIntent = event.data.object;
+        console.log(`💳 PaymentIntent for ${paymentIntent.amount} was successful!`);
+        break;
+      case 'payment_intent.payment_failed':
+        const failedPayment = event.data.object;
+        console.log(`❌ Payment failed: ${failedPayment.last_payment_error?.message}`);
+        break;
+      default:
+        // Unexpected event type
+        console.log(`⚡ Unhandled event type ${event.type}.`);
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    response.send();
+  } else {
+    // No endpoint secret defined - use basic event (not recommended for production)
+    console.log('⚠️ No endpoint secret defined - using basic event deserialization');
+    const rawBody = await getRawBody(request);
+    const event = JSON.parse(rawBody.toString()) as Stripe.Event;
+    
+    // Handle event without verification (not secure)
+    console.log(`Received unverified event: ${event.type}`);
+    response.send();
+  }
+}
+
+// Helper function to get raw body - CRITICAL for signature verification
 async function getRawBody(req: VercelRequest): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -40,88 +96,9 @@ async function getRawBody(req: VercelRequest): Promise<Buffer> {
   });
 }
 
-export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse
-) {
-  // CORS headers for webhook
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
-
-  // Handle CORS preflight
-  if (request.method === 'OPTIONS') {
-    return response.status(200).end();
-  }
-
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  try {
-    const signature = request.headers['stripe-signature'] as string;
-    
-    if (!signature) {
-      console.error('❌ No Stripe signature provided');
-      return response.status(400).json({ error: 'No Stripe signature provided' });
-    }
-
-    // Get RAW body for signature verification
-    const rawBody = await getRawBody(request);
-    
-    let event: Stripe.Event;
-
-    try {
-      // Verify webhook signature with raw body
-      event = stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        process.env.STRIPE_WEBHOOK_SIGNING_SECRET!
-      );
-      console.log('✅ Webhook verified:', event.type, event.id);
-    } catch (err: any) {
-      console.error('❌ Webhook signature verification failed:', err.message);
-      return response.status(400).json({ 
-        error: `Webhook signature verification failed: ${err.message}` 
-      });
-    }
-
-    // Handle the event
-    console.log(`🔄 Processing event: ${event.type}`);
-    
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
-        break;
-      case 'checkout.session.expired':
-        await handleCheckoutSessionExpired(event.data.object as Stripe.Checkout.Session);
-        break;
-      case 'payment_intent.succeeded':
-        console.log('💳 Payment intent succeeded');
-        break;
-      case 'payment_intent.payment_failed':
-        console.log('❌ Payment intent failed');
-        break;
-      default:
-        console.log(`⚡ Unhandled event type: ${event.type}`);
-    }
-
-    // Quickly return 2xx response as per Stripe docs
-    return response.json({ 
-      received: true,
-      event: event.type,
-      message: 'Webhook processed successfully'
-    });
-
-  } catch (error: any) {
-    console.error('💥 Webhook error:', error);
-    return response.status(500).json({ error: error.message });
-  }
-}
-
 // Handle successful checkout sessions
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
-  console.log('💰 Processing completed checkout session:', session.id);
+  console.log('🔄 Processing completed checkout session:', session.id);
   const appointmentId = session.metadata?.appointment_id;
   
   if (!appointmentId) {
