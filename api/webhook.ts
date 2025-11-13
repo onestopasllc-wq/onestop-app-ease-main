@@ -10,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Replace this endpoint secret with your endpoint's unique secret
 // If you are testing with the CLI, find the secret by running 'stripe listen'
 // If you are using an endpoint defined with the API or dashboard, look in your webhook settings
-const endpointSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET!;
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
@@ -22,24 +22,6 @@ export default async function handler(
   request: VercelRequest,
   response: VercelResponse
 ) {
-  // Debug: log incoming method and Stripe signature header to diagnose 405 responses
-  try {
-    console.log('Incoming webhook request', {
-      method: request.method,
-      url: (request as any).url || request.url,
-      stripeSignature: request.headers['stripe-signature'] || request.headers['Stripe-Signature'] || null,
-    });
-  } catch (err) {
-    console.error('Failed to log incoming request info', err);
-  }
-
-  // Quick handle for preflight
-  if (request.method === 'OPTIONS') {
-    response.setHeader('Access-Control-Allow-Origin', '*');
-    response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
-    return response.status(200).send('ok');
-  }
   // Only verify the event if you have an endpoint secret defined
   if (endpointSecret) {
     // Get the signature sent by Stripe
@@ -90,17 +72,17 @@ export default async function handler(
         console.log(`⚡ Unhandled event type ${event.type}.`);
     }
 
-  // Return a 200 response to acknowledge receipt of the event
-  return response.status(200).send('ok');
+    // Return a 200 response to acknowledge receipt of the event
+    response.send();
   } else {
     // No endpoint secret defined - use basic event (not recommended for production)
     console.log('⚠️ No endpoint secret defined - using basic event deserialization');
     const rawBody = await getRawBody(request);
     const event = JSON.parse(rawBody.toString()) as Stripe.Event;
     
-  // Handle event without verification (not secure)
-  console.log(`Received unverified event: ${event.type}`);
-  return response.status(200).send('ok');
+    // Handle event without verification (not secure)
+    console.log(`Received unverified event: ${event.type}`);
+    response.send();
   }
 }
 
