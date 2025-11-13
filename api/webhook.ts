@@ -2,82 +2,93 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-// Types matching your existing appointments schema (partial)
+// Types matching your database schema
 interface Appointment {
   id: string;
   full_name: string;
   email: string;
-  phone?: string | null;
+  phone: string | null;
   appointment_date: string;
   appointment_time: string;
   services: string[];
-  description?: string | null;
-  payment_status?: string | null;
-  status?: string | null;
-  stripe_session_id?: string | null;
-  created_at?: string;
+  description: string | null;
+  payment_status: string | null;
+  status: string;
+  stripe_session_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-// Initialize Stripe with API version compatible with your code
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-08-27.basil' as any,
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-10-29.clover' as any,
 });
 
-// Supabase admin client (service role key required for server-side updates)
+// Initialize Supabase admin client
 const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-  { auth: { persistSession: false } }
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// CORS headers to return on all responses
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, X-Client-Info, API-Key, Content-Type, Stripe-Signature',
-};
+// Helper to get raw body for signature verification
+async function getRawBody(req: VercelRequest): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Quick debug: log incoming request method/url and incoming Stripe signature header
-  // This helps diagnose 405s where a POST may be converted to GET by a redirect or middleware
-  try {
-    console.log('Incoming webhook request', {
-      method: req.method,
-      url: (req as any).url || req.url,
-      stripeSignature: req.headers['stripe-signature'] || req.headers['Stripe-Signature'] || null,
-    });
-  } catch (err) {
-    console.error('Failed to log incoming request info', err);
+export default async function handler(
+  request: VercelRequest,
+  response: VercelResponse
+) {
+  // CORS headers for webhook
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
+
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    return response.status(200).end();
   }
 
-  // Always return CORS for preflight and regular responses
-  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const signature = (req.headers['stripe-signature'] as string) || req.headers['Stripe-Signature'] as string;
-  if (!signature) {
-    console.error('No Stripe signature header present');
-    return res.status(400).json({ error: 'Missing Stripe signature' });
-  }
-
-  let event: Stripe.Event;
-  try {
-    const rawBody = await getRawBody(req);
-    event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SIGNING_SECRET as string);
-    console.log('✔️  Stripe webhook verified:', event.type, event.id);
-  } catch (err: any) {
-    console.error('❌ Webhook signature verification failed:', err?.message || err);
-    return res.status(400).json({ error: `Webhook signature verification failed: ${err?.message || err}` });
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
+    const signature = request.headers['stripe-signature'] as string;
+    
+    if (!signature) {
+      console.error('❌ No Stripe signature provided');
+      return response.status(400).json({ error: 'No Stripe signature provided' });
+    }
+
+    // Get RAW body for signature verification
+    const rawBody = await getRawBody(request);
+    
+    let event: Stripe.Event;
+
+    try {
+      // Verify webhook signature with raw body
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+      console.log('✅ Webhook verified:', event.type, event.id);
+    } catch (err: any) {
+      console.error('❌ Webhook signature verification failed:', err.message);
+      return response.status(400).json({ 
+        error: `Webhook signature verification failed: ${err.message}` 
+      });
+    }
+
+    // Handle the event
+    console.log(`🔄 Processing event: ${event.type}`);
+    
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
@@ -85,151 +96,177 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'checkout.session.expired':
         await handleCheckoutSessionExpired(event.data.object as Stripe.Checkout.Session);
         break;
+      case 'payment_intent.succeeded':
+        console.log('💳 Payment intent succeeded');
+        break;
+      case 'payment_intent.payment_failed':
+        console.log('❌ Payment intent failed');
+        break;
       default:
-        console.log('Unhandled event type:', event.type);
+        console.log(`⚡ Unhandled event type: ${event.type}`);
     }
 
-    return res.status(200).json({ received: true });
+    // Quickly return 2xx response as per Stripe docs
+    return response.json({ 
+      received: true,
+      event: event.type,
+      message: 'Webhook processed successfully'
+    });
+
   } catch (error: any) {
-    console.error('Error handling webhook event:', error);
-    return res.status(500).json({ error: 'Webhook handling failed' });
+    console.error('💥 Webhook error:', error);
+    return response.status(500).json({ error: error.message });
   }
 }
 
-// Helper: read raw body buffer from VercelRequest
-function getRawBody(req: VercelRequest): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    // The incoming message is a Node IncomingMessage
-    // @ts-ignore
-    const stream = req as unknown as NodeJS.ReadableStream;
-    stream.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
-    stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', reject);
-  });
-}
-
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  console.log('💰 checkout.session.completed, session id:', session.id, 'metadata:', session.metadata);
-
-  // Prefer appointment_id in metadata
-  let appointmentId = session.metadata?.appointment_id || session.client_reference_id || null;
-
-  // If we don't have appointmentId, attempt to fetch full session from Stripe (robustness)
+// Handle successful checkout sessions
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
+  console.log('💰 Processing completed checkout session:', session.id);
+  const appointmentId = session.metadata?.appointment_id;
+  
   if (!appointmentId) {
-    try {
-      const fetched = await stripe.checkout.sessions.retrieve(session.id as string);
-      appointmentId = fetched.metadata?.appointment_id || fetched.client_reference_id || null;
-      session = fetched;
-      console.log('Fetched session from Stripe for metadata lookup:', fetched.id, fetched.metadata);
-    } catch (err) {
-      console.error('Failed to retrieve session from Stripe:', err);
-    }
-  }
-
-  // Fallback: try looking up appointment by stripe_session_id in the DB
-  if (!appointmentId) {
-    try {
-      console.log('Attempting fallback DB lookup by stripe_session_id:', session.id);
-      const { data: found, error: findErr } = await supabaseAdmin
-        .from('appointments')
-        .select('id')
-        .eq('stripe_session_id', session.id as string)
-        .limit(1)
-        .maybeSingle();
-
-      if (findErr) {
-        console.error('Error querying appointment by stripe_session_id:', findErr);
-      } else if (found) {
-        appointmentId = (found as any).id as string;
-        console.log('Found appointment by stripe_session_id:', appointmentId);
-      }
-    } catch (err) {
-      console.error('Fallback DB lookup failed:', err);
-    }
-  }
-
-  if (!appointmentId) {
-    console.error('No appointment id found for session, cannot update DB');
+    console.error('❌ No appointment ID found in session metadata');
     return;
   }
 
-  // Normalize id
-  appointmentId = String(appointmentId).trim();
-
-  // Update appointment row
   try {
-    const { data: updated, error } = await supabaseAdmin
+    console.log('📝 Updating appointment in database:', appointmentId);
+    
+    // Update appointment in Supabase
+    const { error } = await supabaseAdmin
       .from('appointments')
-      .update({ payment_status: 'paid', stripe_session_id: session.id as string, status: 'confirmed' })
-      .eq('id', appointmentId)
-      .select();
+      .update({
+        payment_status: 'paid',
+        stripe_session_id: session.id,
+        status: 'confirmed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', appointmentId);
 
     if (error) {
-      console.error('Error updating appointment:', error);
-      return;
+      console.error('❌ Database update error:', error);
+      throw error;
     }
 
-    if (!updated || (Array.isArray(updated) && updated.length === 0)) {
-      console.warn('No rows updated for appointment id:', appointmentId);
-    } else {
-      console.log('Appointment updated to paid:', appointmentId);
-    }
+    console.log('✅ Appointment updated successfully');
 
-    // Fire notifications via existing Edge Functions (non-blocking)
-    try {
-      await supabaseAdmin.functions.invoke('send-confirmation-email', {
-        body: {
-          to: (updated && Array.isArray(updated) ? updated[0].email : undefined) || null,
-          name: (updated && Array.isArray(updated) ? updated[0].full_name : undefined) || null,
-          appointmentDate: (updated && Array.isArray(updated) ? updated[0].appointment_date : undefined) || null,
-          appointmentTime: (updated && Array.isArray(updated) ? updated[0].appointment_time : undefined) || null,
-          services: (updated && Array.isArray(updated) ? updated[0].services : undefined) || []
-        }
-      });
-    } catch (err) {
-      console.error('Failed invoking confirmation email function:', err);
-    }
-
-    try {
-      await supabaseAdmin.functions.invoke('send-whatsapp-notification', {
-        body: {
-          customerName: (updated && Array.isArray(updated) ? updated[0].full_name : undefined) || '',
-          email: (updated && Array.isArray(updated) ? updated[0].email : undefined) || '',
-          phone: (updated && Array.isArray(updated) ? updated[0].phone : undefined) || 'Not provided',
-          services: (updated && Array.isArray(updated) ? updated[0].services : undefined) || [],
-          date: (updated && Array.isArray(updated) ? updated[0].appointment_date : undefined) || '',
-          time: (updated && Array.isArray(updated) ? updated[0].appointment_time : undefined) || '',
-          description: (updated && Array.isArray(updated) ? updated[0].description : undefined) || ''
-        }
-      });
-    } catch (err) {
-      console.error('Failed invoking WhatsApp function:', err);
-    }
-
-  } catch (err) {
-    console.error('Unhandled error updating appointment:', err);
+    // Send notifications
+    await sendPaymentConfirmationEmail(appointmentId);
+    await sendPaymentWhatsAppNotification(appointmentId);
+    
+  } catch (error: any) {
+    console.error('❌ Error in handleCheckoutSessionCompleted:', error);
+    throw error;
   }
 }
 
-async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
-  console.log('⌛ checkout.session.expired, session id:', session.id);
-  let appointmentId = session.metadata?.appointment_id || session.client_reference_id || null;
-
+// Handle expired checkout sessions
+async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): Promise<void> {
+  console.log('⏰ Processing expired checkout session:', session.id);
+  const appointmentId = session.metadata?.appointment_id;
+  
   if (!appointmentId) {
-    console.log('No appointment id in metadata for expired session, skipping');
+    console.log('ℹ️ No appointment ID found for expired session');
     return;
   }
 
   try {
     const { error } = await supabaseAdmin
       .from('appointments')
-      .update({ payment_status: 'expired', status: 'cancelled' })
+      .update({
+        payment_status: 'expired',
+        status: 'cancelled',
+        updated_at: new Date().toISOString()
+      })
       .eq('id', appointmentId);
 
-    if (error) console.error('Error marking appointment expired:', error);
-    else console.log('Appointment marked expired:', appointmentId);
-  } catch (err) {
-    console.error('Unhandled error marking expired:', err);
+    if (error) {
+      console.error('❌ Database update error for expired session:', error);
+      throw error;
+    }
+    
+    console.log(`✅ Appointment ${appointmentId} marked as expired`);
+  } catch (error: any) {
+    console.error('❌ Error in handleCheckoutSessionExpired:', error);
+  }
+}
+
+// Send email confirmation using your existing Edge Function
+async function sendPaymentConfirmationEmail(appointmentId: string): Promise<void> {
+  try {
+    console.log('📧 Sending payment confirmation email for appointment:', appointmentId);
+    
+    const { data: appointment, error: fetchError } = await supabaseAdmin
+      .from('appointments')
+      .select('*')
+      .eq('id', appointmentId)
+      .single();
+
+    if (fetchError || !appointment) {
+      console.error('❌ Failed to fetch appointment for email:', fetchError);
+      return;
+    }
+
+    // Call your existing email Edge Function
+    const { error } = await supabaseAdmin.functions.invoke('send-confirmation-email', {
+      body: {
+        to: appointment.email,
+        name: appointment.full_name,
+        appointmentDate: appointment.appointment_date,
+        appointmentTime: appointment.appointment_time,
+        services: appointment.services,
+        paymentStatus: 'paid'
+      }
+    });
+
+    if (error) {
+      console.error('❌ Failed to invoke email function:', error);
+      throw error;
+    }
+    
+    console.log('✅ Payment confirmation email sent successfully');
+  } catch (error: any) {
+    console.error('❌ Failed to send email:', error);
+  }
+}
+
+// Send WhatsApp notification using your existing Edge Function
+async function sendPaymentWhatsAppNotification(appointmentId: string): Promise<void> {
+  try {
+    console.log('💬 Sending WhatsApp notification for appointment:', appointmentId);
+    
+    const { data: appointment, error: fetchError } = await supabaseAdmin
+      .from('appointments')
+      .select('*')
+      .eq('id', appointmentId)
+      .single();
+
+    if (fetchError || !appointment) {
+      console.error('❌ Failed to fetch appointment for WhatsApp:', fetchError);
+      return;
+    }
+
+    // Call your existing WhatsApp Edge Function
+    const { error } = await supabaseAdmin.functions.invoke('send-whatsapp-notification', {
+      body: {
+        customerName: appointment.full_name,
+        email: appointment.email,
+        phone: appointment.phone || 'Not provided',
+        services: appointment.services,
+        date: appointment.appointment_date,
+        time: appointment.appointment_time,
+        description: appointment.description,
+        paymentStatus: 'paid'
+      }
+    });
+
+    if (error) {
+      console.error('❌ Failed to invoke WhatsApp function:', error);
+      throw error;
+    }
+    
+    console.log('✅ WhatsApp notification sent successfully');
+  } catch (error: any) {
+    console.error('❌ Failed to send WhatsApp:', error);
   }
 }
