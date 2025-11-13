@@ -76,7 +76,7 @@ export default async function handler(
       event = stripe.webhooks.constructEvent(
         rawBody,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+        process.env.STRIPE_WEBHOOK_SIGNING_SECRET!
       );
       console.log('✅ Webhook verified:', event.type, event.id);
     } catch (err: any) {
