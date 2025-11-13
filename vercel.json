@@ -15,7 +15,7 @@
     {
       "src": "^/api/webhook$",
       "methods": ["POST", "OPTIONS"],
-      "dest": "/api/webhook.ts"
+      "dest": "/api/webhook"
     },
     {
       "src": "^/api/(.*)$",
