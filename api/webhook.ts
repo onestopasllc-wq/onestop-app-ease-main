@@ -38,6 +38,18 @@ const CORS_HEADERS = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Quick debug: log incoming request method/url and incoming Stripe signature header
+  // This helps diagnose 405s where a POST may be converted to GET by a redirect or middleware
+  try {
+    console.log('Incoming webhook request', {
+      method: req.method,
+      url: (req as any).url || req.url,
+      stripeSignature: req.headers['stripe-signature'] || req.headers['Stripe-Signature'] || null,
+    });
+  } catch (err) {
+    console.error('Failed to log incoming request info', err);
+  }
+
   // Always return CORS for preflight and regular responses
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
