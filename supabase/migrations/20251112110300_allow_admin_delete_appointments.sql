@@ -6,7 +6,7 @@ CREATE POLICY "Admins can delete appointments"
 ON public.appointments
 FOR DELETE
 USING (public.has_role(auth.uid(), 'admin'::app_role));
-
+                      
 -- Additional optimizations: add indexes and missing columns for Appointments
 -- Add missing columns if they don't exist
 ALTER TABLE appointments 
