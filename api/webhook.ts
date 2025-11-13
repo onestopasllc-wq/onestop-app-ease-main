@@ -120,7 +120,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     try {
       console.log('Attempting fallback DB lookup by stripe_session_id:', session.id);
       const { data: found, error: findErr } = await supabaseAdmin
-        .from<Appointment>('appointments')
+        .from('appointments')
         .select('id')
         .eq('stripe_session_id', session.id as string)
         .limit(1)
@@ -148,7 +148,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   // Update appointment row
   try {
     const { data: updated, error } = await supabaseAdmin
-      .from<Appointment>('appointments')
+      .from('appointments')
       .update({ payment_status: 'paid', stripe_session_id: session.id as string, status: 'confirmed' })
       .eq('id', appointmentId)
       .select();
