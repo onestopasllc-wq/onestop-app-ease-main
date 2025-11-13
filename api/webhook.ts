@@ -2,91 +2,112 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-// This is your Stripe secret key - use environment variables!
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Initialize with error handling
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Check if environment variables are set
+if (!stripeSecretKey || !webhookSecret || !supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Missing environment variables:', {
+    hasStripeKey: !!stripeSecretKey,
+    hasWebhookSecret: !!webhookSecret,
+    hasSupabaseUrl: !!supabaseUrl,
+    hasServiceKey: !!supabaseServiceKey
+  });
+}
+
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, {
   apiVersion: '2025-10-29.clover' as any,
-});
+}) : null;
 
-// Replace this endpoint secret with your endpoint's unique secret
-// If you are testing with the CLI, find the secret by running 'stripe listen'
-// If you are using an endpoint defined with the API or dashboard, look in your webhook settings
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
-// Initialize Supabase admin client
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = supabaseUrl && supabaseServiceKey ? createClient(
+  supabaseUrl,
+  supabaseServiceKey
+) : null;
 
 export default async function handler(
   request: VercelRequest,
   response: VercelResponse
 ) {
-  // Only verify the event if you have an endpoint secret defined
-  if (endpointSecret) {
-    // Get the signature sent by Stripe
+  console.log('🔔 Webhook handler called, method:', request.method);
+
+  // Handle CORS preflight
+  if (request.method === 'OPTIONS') {
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Stripe-Signature');
+    return response.status(200).send('ok');
+  }
+
+  // Only allow POST requests
+  if (request.method !== 'POST') {
+    response.setHeader('Allow', 'POST');
+    return response.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  try {
+    // Check if environment variables are missing
+    if (!stripe || !supabaseAdmin) {
+      console.error('❌ Missing environment variables - cannot process webhook');
+      return response.status(500).json({ 
+        error: 'Server configuration error: Missing environment variables' 
+      });
+    }
+
     const signature = request.headers['stripe-signature'] as string;
     
     if (!signature) {
       console.log('⚠️ No Stripe signature provided');
-      return response.status(400).send('No Stripe signature provided');
+      return response.status(400).json({ error: 'No Stripe signature provided' });
     }
 
-    let event: Stripe.Event;
+    // Get raw body
     const rawBody = await getRawBody(request);
+    console.log('📦 Raw body received, length:', rawBody.length);
 
+    let event;
     try {
       event = stripe.webhooks.constructEvent(
         rawBody,
         signature,
-        endpointSecret
+        webhookSecret
       );
       console.log('✅ Webhook signature verified:', event.type);
     } catch (err: any) {
-      console.log(`⚠️ Webhook signature verification failed.`, err.message);
-      return response.status(400).send(`Webhook signature verification failed: ${err.message}`);
+      console.log('⚠️ Webhook signature verification failed:', err.message);
+      return response.status(400).json({ 
+        error: `Webhook signature verification failed: ${err.message}` 
+      });
     }
 
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
-        const checkoutSession = event.data.object;
-        console.log(`💰 Checkout Session for ${checkoutSession.amount_total} was successful!`);
-        await handleCheckoutSessionCompleted(checkoutSession);
+        console.log(`💰 Checkout Session completed: ${event.id}`);
+        await handleCheckoutSessionCompleted(event.data.object);
         break;
       case 'checkout.session.expired':
-        const expiredSession = event.data.object;
-        console.log(`⏰ Checkout Session expired: ${expiredSession.id}`);
-        await handleCheckoutSessionExpired(expiredSession);
-        break;
-      case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object;
-        console.log(`💳 PaymentIntent for ${paymentIntent.amount} was successful!`);
-        break;
-      case 'payment_intent.payment_failed':
-        const failedPayment = event.data.object;
-        console.log(`❌ Payment failed: ${failedPayment.last_payment_error?.message}`);
+        console.log(`⏰ Checkout Session expired: ${event.id}`);
+        await handleCheckoutSessionExpired(event.data.object);
         break;
       default:
-        // Unexpected event type
-        console.log(`⚡ Unhandled event type ${event.type}.`);
+        console.log(`⚡ Unhandled event type: ${event.type}`);
     }
 
-    // Return a 200 response to acknowledge receipt of the event
-    response.send();
-  } else {
-    // No endpoint secret defined - use basic event (not recommended for production)
-    console.log('⚠️ No endpoint secret defined - using basic event deserialization');
-    const rawBody = await getRawBody(request);
-    const event = JSON.parse(rawBody.toString()) as Stripe.Event;
-    
-    // Handle event without verification (not secure)
-    console.log(`Received unverified event: ${event.type}`);
-    response.send();
+    return response.json({ received: true });
+
+  } catch (error: any) {
+    console.error('💥 Webhook error:', error);
+    return response.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message 
+    });
   }
 }
 
-// Helper function to get raw body - CRITICAL for signature verification
+// Helper function to get raw body
 async function getRawBody(req: VercelRequest): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -96,9 +117,14 @@ async function getRawBody(req: VercelRequest): Promise<Buffer> {
   });
 }
 
-// Handle successful checkout sessions
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
-  console.log('🔄 Processing completed checkout session:', session.id);
+// Handler functions
+async function handleCheckoutSessionCompleted(session: any) {
+  if (!supabaseAdmin) {
+    console.error('❌ Supabase client not initialized');
+    return;
+  }
+
+  console.log('💰 Processing completed checkout session:', session.id);
   const appointmentId = session.metadata?.appointment_id;
   
   if (!appointmentId) {
@@ -107,9 +133,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
   }
 
   try {
-    console.log('📝 Updating appointment in database:', appointmentId);
-    
-    // Update appointment in Supabase
     const { error } = await supabaseAdmin
       .from('appointments')
       .update({
@@ -120,32 +143,24 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
       })
       .eq('id', appointmentId);
 
-    if (error) {
-      console.error('❌ Database update error:', error);
-      throw error;
-    }
-
+    if (error) throw error;
     console.log('✅ Appointment updated successfully');
 
-    // Send notifications
-    await sendPaymentConfirmationEmail(appointmentId);
-    await sendPaymentWhatsAppNotification(appointmentId);
-    
   } catch (error: any) {
-    console.error('❌ Error in handleCheckoutSessionCompleted:', error);
-    throw error;
+    console.error('❌ Error updating appointment:', error);
   }
 }
 
-// Handle expired checkout sessions
-async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): Promise<void> {
+async function handleCheckoutSessionExpired(session: any) {
+  if (!supabaseAdmin) {
+    console.error('❌ Supabase client not initialized');
+    return;
+  }
+
   console.log('⏰ Processing expired checkout session:', session.id);
   const appointmentId = session.metadata?.appointment_id;
   
-  if (!appointmentId) {
-    console.log('ℹ️ No appointment ID found for expired session');
-    return;
-  }
+  if (!appointmentId) return;
 
   try {
     const { error } = await supabaseAdmin
@@ -157,93 +172,9 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): P
       })
       .eq('id', appointmentId);
 
-    if (error) {
-      console.error('❌ Database update error for expired session:', error);
-      throw error;
-    }
-    
+    if (error) throw error;
     console.log(`✅ Appointment ${appointmentId} marked as expired`);
   } catch (error: any) {
-    console.error('❌ Error in handleCheckoutSessionExpired:', error);
-  }
-}
-
-// Send email confirmation using your existing Edge Function
-async function sendPaymentConfirmationEmail(appointmentId: string): Promise<void> {
-  try {
-    console.log('📧 Sending payment confirmation email for appointment:', appointmentId);
-    
-    const { data: appointment, error: fetchError } = await supabaseAdmin
-      .from('appointments')
-      .select('*')
-      .eq('id', appointmentId)
-      .single();
-
-    if (fetchError || !appointment) {
-      console.error('❌ Failed to fetch appointment for email:', fetchError);
-      return;
-    }
-
-    // Call your existing email Edge Function
-    const { error } = await supabaseAdmin.functions.invoke('send-confirmation-email', {
-      body: {
-        to: appointment.email,
-        name: appointment.full_name,
-        appointmentDate: appointment.appointment_date,
-        appointmentTime: appointment.appointment_time,
-        services: appointment.services,
-        paymentStatus: 'paid'
-      }
-    });
-
-    if (error) {
-      console.error('❌ Failed to invoke email function:', error);
-      throw error;
-    }
-    
-    console.log('✅ Payment confirmation email sent successfully');
-  } catch (error: any) {
-    console.error('❌ Failed to send email:', error);
-  }
-}
-
-// Send WhatsApp notification using your existing Edge Function
-async function sendPaymentWhatsAppNotification(appointmentId: string): Promise<void> {
-  try {
-    console.log('💬 Sending WhatsApp notification for appointment:', appointmentId);
-    
-    const { data: appointment, error: fetchError } = await supabaseAdmin
-      .from('appointments')
-      .select('*')
-      .eq('id', appointmentId)
-      .single();
-
-    if (fetchError || !appointment) {
-      console.error('❌ Failed to fetch appointment for WhatsApp:', fetchError);
-      return;
-    }
-
-    // Call your existing WhatsApp Edge Function
-    const { error } = await supabaseAdmin.functions.invoke('send-whatsapp-notification', {
-      body: {
-        customerName: appointment.full_name,
-        email: appointment.email,
-        phone: appointment.phone || 'Not provided',
-        services: appointment.services,
-        date: appointment.appointment_date,
-        time: appointment.appointment_time,
-        description: appointment.description,
-        paymentStatus: 'paid'
-      }
-    });
-
-    if (error) {
-      console.error('❌ Failed to invoke WhatsApp function:', error);
-      throw error;
-    }
-    
-    console.log('✅ WhatsApp notification sent successfully');
-  } catch (error: any) {
-    console.error('❌ Failed to send WhatsApp:', error);
+    console.error('❌ Error updating expired appointment:', error);
   }
 }
