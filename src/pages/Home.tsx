@@ -57,18 +57,18 @@ const Home = () => {
       text: "OneStop Application Services LLC supported me through the CGFNS process. They were so helpful, patient, and professional!",
       rating: 5,
     },
-    {
-      name: "Sarah Johnson",
-      location: "Washington, DC",
-      text: "Amazing service! They helped me navigate the complex visa application process with ease and professionalism.",
-      rating: 5,
-    },
-    {
-      name: "David Chen",
-      location: "Arlington, VA",
-      text: "Professional, efficient, and supportive. Highly recommend for anyone needing application assistance!",
-      rating: 5,
-    },
+    // {
+    //   name: "Sarah Johnson",
+    //   location: "Washington, DC",
+    //   text: "Amazing service! They helped me navigate the complex visa application process with ease and professionalism.",
+    //   rating: 5,
+    // },
+    // {
+    //   name: "David Chen",
+    //   location: "Arlington, VA",
+    //   text: "Professional, efficient, and supportive. Highly recommend for anyone needing application assistance!",
+    //   rating: 5,
+    // },
   ];
 
   const features = [
