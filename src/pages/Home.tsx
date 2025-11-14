@@ -10,38 +10,45 @@ import heroBg from "@/assets/hero-image.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 
 const Home = () => {
-  const services = [
-    {
-      icon: <FileText className="w-12 h-12" />,
-      title: "Visa Form Preparation",
-      description: "Expert non-legal assistance with visa application forms and comprehensive documentation support.",
-    },
-    {
-      icon: <GraduationCap className="w-12 h-12" />,
-      title: "College Support",
-      description: "Personalized guidance through college and university application processes worldwide.",
-    },
-    {
-      icon: <Globe className="w-12 h-12" />,
-      title: "Document Evaluation",
-      description: "Professional help with credential evaluation applications and timely submissions.",
-    },
-    {
-      icon: <UserCheck className="w-12 h-12" />,
-      title: "Licensing Boards",
-      description: "Comprehensive support for exam and professional licensing board applications.",
-    },
-    {
-      icon: <Briefcase className="w-12 h-12" />,
-      title: "Job Applications",
-      description: "Career readiness coaching and strategic job application assistance.",
-    },
-    {
-      icon: <Building2 className="w-12 h-12" />,
-      title: "Business Licenses",
-      description: "Complete business license and regulatory application support services.",
-    },
-  ];
+ const services = [
+  {
+    icon: <FileText className="w-12 h-12" />,
+    title: "Visa Form Assistance (Non-Legal)",
+    description:
+      "Expert support with visa application forms and documentation preparation. We guide you step-by-step to ensure accurate and complete submissions without providing legal advice.",
+  },
+  {
+    icon: <GraduationCap className="w-12 h-12" />,
+    title: "College & University Application Support",
+    description:
+      "Personalized assistance for domestic and international college and university applications. From program selection to application preparation, we help you present a strong and compelling profile.",
+  },
+  {
+    icon: <Globe className="w-12 h-12" />,
+    title: "Credential & Document Evaluation Support",
+    description:
+      "Professional guidance with all major credential evaluation services. We help you prepare, organize, and submit the required documents for smooth and timely evaluations.",
+  },
+  {
+    icon: <UserCheck className="w-12 h-12" />,
+    title: "Licensing Board Application Support",
+    description:
+      "Comprehensive assistance for exam registrations and professional licensing board applications. We help you understand requirements, prepare documents, and complete every step correctly.",
+  },
+  {
+    icon: <Briefcase className="w-12 h-12" />,
+    title: "Job Application & Career Support",
+    description:
+      "Strategic support for job applications, résumé preparation, and career readiness. We help you confidently apply to positions that match your skills and goals.",
+  },
+  {
+    icon: <Building2 className="w-12 h-12" />,
+    title: "Business License Application Support",
+    description:
+      "Complete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
+  },
+];
+
 
   const testimonials = [
     {
