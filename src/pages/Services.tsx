@@ -13,19 +13,19 @@ const Services = () => {
   const [activeService, setActiveService] = useState<string | undefined>(undefined);
   
   const services = [
-    {
-      icon: <FileText className="w-16 h-16" />,
-      title: "Visa Form Preparation (Non-Legal)",
-      description: "Expert assistance with visa application forms and documentation.",
-      details: [
-        "Complete visa application form assistance",
-        "Document checklist and organization",
-        "Application review and verification",
-        "Submission guidance and tracking",
-        "Interview preparation support",
-      ],
-      note: "We provide non-legal assistance only. For legal advice, please consult an immigration attorney.",
-    },
+    // {
+    //   icon: <FileText className="w-16 h-16" />,
+    //   title: "Visa Form Preparation (Non-Legal)",
+    //   description: "Expert assistance with visa application forms and documentation.",
+    //   details: [
+    //     "Complete visa application form assistance",
+    //     "Document checklist and organization",
+    //     "Application review and verification",
+    //     "Submission guidance and tracking",
+    //     "Interview preparation support",
+    //   ],
+    //   note: "We provide non-legal assistance only. For legal advice, please consult an immigration attorney.",
+    // },
     {
       icon: <GraduationCap className="w-16 h-16" />,
       title: "College & University Application Support",
@@ -77,19 +77,19 @@ const Services = () => {
         "Interview preparation coaching",
       ],
     },
-    {
-      icon: <Building2 className="w-16 h-16" />,
-      title: "Business License & Related Application Support",
-      description: "Complete support for business registration and licensing.",
-      details: [
-        "Business entity selection guidance",
-        "License and permit identification",
-        "Application form completion",
-        "Regulatory compliance assistance",
-        "Renewal and update support",
-        "Multi-jurisdictional applications",
-      ],
-    },
+    // {
+    //   icon: <Building2 className="w-16 h-16" />,
+    //   title: "Business License & Related Application Support",
+    //   description: "Complete support for business registration and licensing.",
+    //   details: [
+    //     "Business entity selection guidance",
+    //     "License and permit identification",
+    //     "Application form completion",
+    //     "Regulatory compliance assistance",
+    //     "Renewal and update support",
+    //     "Multi-jurisdictional applications",
+    //   ],
+    // },
   ];
 
   return (

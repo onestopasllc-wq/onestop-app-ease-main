@@ -54,6 +54,20 @@ const Footer = () => {
         <div className="border-t border-primary-foreground/20 pt-8 text-center text-primary-foreground/60">
           <p>&copy; {new Date().getFullYear()} OneStop Application Services LLC. All rights reserved.</p>
         </div>
+        {/* Powered by */}
+        <div className="border-t border-primary-foreground/20 pt-4 text-center text-primary-foreground/60 mt-4">
+          <p>
+            Powered by{" "}
+            <a
+              href="tel:+251913901952"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-primary-foreground transition-smooth"
+            >
+              Haileab Shimels
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );
