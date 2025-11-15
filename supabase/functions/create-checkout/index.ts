@@ -83,7 +83,7 @@ serve(async (req) => {
               name: "Appointment Booking Deposit",
               description: "OneStop Application Services - Appointment Deposit"
             },
-            unit_amount: 1000
+            unit_amount: 2500
           },
           quantity: 1
         }
