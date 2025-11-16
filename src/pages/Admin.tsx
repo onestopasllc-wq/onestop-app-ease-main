@@ -1,7 +1,7 @@
-// Admin.tsx (PATCHED) — paste over your existing file
+// Admin.tsx (IMPROVED UX) — paste over your existing file
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,7 +26,18 @@ import {
   Settings,
   Trash2,
   Mail,
-  Menu
+  Menu,
+  Eye,
+  FileText,
+  Phone,
+  MessageSquare,
+  User,
+  Mail as MailIcon,
+  Calendar as CalendarIcon,
+  Clock as ClockIcon,
+  File,
+  Search,
+  X
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -126,11 +137,14 @@ const Admin = () => {
   const [filterService, setFilterService] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [stats, setStats] = useState<Stats>({ today_count: 0, upcoming_count: 0, paid_count: 0, total_revenue: 0 });
   const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [newBlockedDate, setNewBlockedDate] = useState("");
   const [newBlockedReason, setNewBlockedReason] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -200,7 +214,6 @@ const Admin = () => {
 
   const fetchStats = async () => {
     console.log("Fetching stats...");
-    // We'll call the admin function to get appointments and compute stats locally
     const res = await callAdminFn({ action: "get" });
     if (!res.success) {
       toast.error("Failed to fetch stats: " + (res.error || "unknown"));
@@ -261,8 +274,18 @@ const Admin = () => {
       filtered = filtered.filter(apt => apt.appointment_date === filterDate);
     }
 
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(apt => 
+        apt.full_name.toLowerCase().includes(term) ||
+        apt.email.toLowerCase().includes(term) ||
+        (apt.phone && apt.phone.toLowerCase().includes(term)) ||
+        apt.services.some(service => service.toLowerCase().includes(term))
+      );
+    }
+
     setFilteredAppointments(filtered);
-  }, [filterService, filterDate, appointments]);
+  }, [filterService, filterDate, appointments, searchTerm]);
 
   const isAllSelected = filteredAppointments.length > 0 && filteredAppointments.every(apt => selectedIds.has(apt.id));
 
@@ -396,7 +419,7 @@ const Admin = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Date", "Time", "Name", "Email", "Phone", "Services", "Status", "Payment Status"];
+    const headers = ["Date", "Time", "Name", "Email", "Phone", "Services", "Status", "Payment Status", "Contact Method", "How Heard", "Description"];
     const rows = filteredAppointments.map(apt => [
       apt.appointment_date,
       apt.appointment_time,
@@ -405,7 +428,10 @@ const Admin = () => {
       apt.phone || "",
       apt.services.join("; "),
       apt.status,
-      apt.payment_status || ""
+      apt.payment_status || "",
+      apt.contact_method,
+      apt.how_heard || "",
+      apt.description || ""
     ]);
 
     const csvContent = [
@@ -458,6 +484,12 @@ const Admin = () => {
     });
 
     return weekData;
+  };
+
+  const clearFilters = () => {
+    setFilterService("all");
+    setFilterDate("");
+    setSearchTerm("");
   };
 
   if (loading) {
@@ -690,10 +722,33 @@ const Admin = () => {
                     </div>
                   </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Filters */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Enhanced Filters */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="search">Search</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="search"
+                          placeholder="Search by name, email, phone, or service..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                        {searchTerm && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-1 top-1 h-7 w-7 p-0"
+                            onClick={() => setSearchTerm("")}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                     <div>
-                      <Label htmlFor="service-filter">Filter by Service</Label>
+                      <Label htmlFor="service-filter">Service</Label>
                       <Select value={filterService} onValueChange={setFilterService}>
                         <SelectTrigger id="service-filter">
                           <SelectValue placeholder="All Services" />
@@ -710,13 +765,37 @@ const Admin = () => {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="date-filter">Filter by Date</Label>
-                      <Input
-                        id="date-filter"
-                        type="date"
-                        value={filterDate}
-                        onChange={(e) => setFilterDate(e.target.value)}
-                      />
+                      <Label htmlFor="date-filter">Date</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="date-filter"
+                          type="date"
+                          value={filterDate}
+                          onChange={(e) => setFilterDate(e.target.value)}
+                        />
+                        {(filterService !== "all" || filterDate || searchTerm) && (
+                          <Button variant="outline" onClick={clearFilters} className="px-3">
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Results Count */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {filteredAppointments.length} of {appointments.length} appointments
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        Total: {appointments.length}
+                      </Badge>
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Today: {stats.today_count}
+                      </Badge>
                     </div>
                   </div>
 
@@ -785,148 +864,320 @@ const Admin = () => {
                                 <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} />
                               </div>
                             </TableHead>
-                            <TableHead>Date & Time</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Contact</TableHead>
+                            <TableHead>Client</TableHead>
                             <TableHead>Services</TableHead>
+                            <TableHead>Date & Time</TableHead>
+                            <TableHead>Contact Info</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Payment</TableHead>
-                            <TableHead>Actions</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredAppointments.map((apt) => (
-                            <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors">
-                            <TableCell className="w-12">
-                              <div className="flex items-center justify-center">
-                                <Checkbox checked={selectedIds.has(apt.id)} onCheckedChange={() => toggleSelect(apt.id)} />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <div className="font-medium">{apt.appointment_date}</div>
-                                  <div className="text-sm text-muted-foreground">{apt.appointment_time}</div>
+                            <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors group">
+                              <TableCell className="w-12">
+                                <div className="flex items-center justify-center">
+                                  <Checkbox checked={selectedIds.has(apt.id)} onCheckedChange={() => toggleSelect(apt.id)} />
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium">{apt.full_name}</TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <div>{apt.email}</div>
-                                {apt.phone && <div className="text-muted-foreground">{apt.phone}</div>}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {apt.services.slice(0, 2).map((service, i) => (
-                                  <Badge key={i} variant="secondary" className="text-xs">
-                                    {service}
-                                  </Badge>
-                                ))}
-                                {apt.services.length > 2 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    +{apt.services.length - 2}
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  apt.status === "completed" ? "default" :
-                                  apt.status === "confirmed" ? "secondary" :
-                                  apt.status === "cancelled" ? "destructive" :
-                                  "outline"
-                                }
-                              >
-                                {apt.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={apt.payment_status === "paid" ? "default" : "outline"}
-                              >
-                                {apt.payment_status || "pending"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => setEditingAppointment(apt)}
-                                        className="shadow-md hover-lift"
-                                      >
-                                        Edit
-                                      </Button>
-                                    </motion.div>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Update Appointment</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4 py-4">
-                                      <div className="space-y-2">
-                                        <Label>Customer: {apt.full_name}</Label>
-                                        <Label>Date: {apt.appointment_date} at {apt.appointment_time}</Label>
-                                      </div>
-                                      <div className="space-y-2">
-                                        <Label htmlFor="status">Status</Label>
-                                        <Select
-                                          defaultValue={apt.status}
-                                          onValueChange={(value) => handleStatusUpdate(apt.id, value)}
-                                        >
-                                          <SelectTrigger id="status">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="pending">Pending</SelectItem>
-                                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                                            <SelectItem value="completed">Completed</SelectItem>
-                                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                    <User className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{apt.full_name}</div>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <MailIcon className="h-3 w-3" />
+                                      {apt.email}
                                     </div>
-                                  </DialogContent>
-                                </Dialog>
-                                
-                                <motion.div whileHover={{ scale: 1.1, rotate: 10 }} whileTap={{ scale: 0.9 }}>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => sendReminder(apt)}
-                                    className="shadow-md hover-lift"
-                                  >
-                                    <Mail className="h-4 w-4" />
-                                  </Button>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      // select this single appointment and open confirm dialog
-                                      setSelectedIds(new Set([apt.id]));
-                                      setShowDeleteDialog(true);
-                                    }}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </motion.div>
-                              </div>
-                            </TableCell>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                  {apt.services.map((service, i) => (
+                                    <Badge key={i} variant="secondary" className="text-xs">
+                                      {service}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                  <div>
+                                    <div className="font-medium">{apt.appointment_date}</div>
+                                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                      <ClockIcon className="h-3 w-3" />
+                                      {apt.appointment_time}
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Phone className="h-3 w-3" />
+                                    {apt.phone || "Not provided"}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <MessageSquare className="h-3 w-3" />
+                                    {apt.contact_method}
+                                  </div>
+                                  {apt.how_heard && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Heard from: {apt.how_heard}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    apt.status === "completed" ? "default" :
+                                    apt.status === "confirmed" ? "secondary" :
+                                    apt.status === "cancelled" ? "destructive" :
+                                    "outline"
+                                  }
+                                >
+                                  {apt.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={apt.payment_status === "paid" ? "default" : "outline"}
+                                >
+                                  {apt.payment_status || "pending"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2 justify-end">
+                                  {/* View Details Button */}
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => setViewingAppointment(apt)}
+                                          className="hover:bg-blue-50 hover:text-blue-600 hover-lift shadow-sm"
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                      </motion.div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                      <DialogHeader>
+                                        <DialogTitle>Appointment Details</DialogTitle>
+                                      </DialogHeader>
+                                      {viewingAppointment && (
+                                        <div className="space-y-6 py-4">
+                                          {/* Personal Information */}
+                                          <div>
+                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                              <User className="h-4 w-4" />
+                                              Personal Information
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Full Name</Label>
+                                                <p className="font-medium">{viewingAppointment.full_name}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Email</Label>
+                                                <p className="font-medium">{viewingAppointment.email}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Phone</Label>
+                                                <p className="font-medium">{viewingAppointment.phone || "Not provided"}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Contact Method</Label>
+                                                <p className="font-medium">{viewingAppointment.contact_method}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          {/* Services */}
+                                          <div>
+                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                              <FileText className="h-4 w-4" />
+                                              Services Requested
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2 p-4 bg-muted/20 rounded-lg">
+                                              {viewingAppointment.services.map((service, index) => (
+                                                <Badge key={index} variant="secondary" className="text-sm">
+                                                  {service}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          </div>
+
+                                          {/* Appointment Details */}
+                                          <div>
+                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                              <Calendar className="h-4 w-4" />
+                                              Appointment Details
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Date</Label>
+                                                <p className="font-medium">{viewingAppointment.appointment_date}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Time</Label>
+                                                <p className="font-medium">{viewingAppointment.appointment_time}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">How They Heard About Us</Label>
+                                                <p className="font-medium">{viewingAppointment.how_heard || "Not specified"}</p>
+                                              </div>
+                                              {viewingAppointment.file_url && (
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Uploaded File</Label>
+                                                  <a 
+                                                    href={viewingAppointment.file_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="font-medium text-blue-600 hover:underline flex items-center gap-1"
+                                                  >
+                                                    <File className="h-4 w-4" />
+                                                    View Document
+                                                  </a>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          {/* Additional Details */}
+                                          {viewingAppointment.description && (
+                                            <div>
+                                              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                                <MessageSquare className="h-4 w-4" />
+                                                Additional Details
+                                              </h3>
+                                              <div className="p-4 bg-muted/20 rounded-lg">
+                                                <p className="text-sm whitespace-pre-wrap">{viewingAppointment.description}</p>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Status Update */}
+                                          <div>
+                                            <h3 className="font-semibold mb-3">Update Status</h3>
+                                            <Select
+                                              defaultValue={viewingAppointment.status}
+                                              onValueChange={(value) => handleStatusUpdate(viewingAppointment.id, value)}
+                                            >
+                                              <SelectTrigger>
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value="pending">Pending</SelectItem>
+                                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                                <SelectItem value="completed">Completed</SelectItem>
+                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </DialogContent>
+                                  </Dialog>
+
+                                  {/* Edit Button */}
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm" 
+                                          onClick={() => setEditingAppointment(apt)}
+                                          className="hover-lift shadow-sm"
+                                        >
+                                          Edit
+                                        </Button>
+                                      </motion.div>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>Update Appointment</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                          <Label>Customer: {apt.full_name}</Label>
+                                          <Label>Date: {apt.appointment_date} at {apt.appointment_time}</Label>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <Label htmlFor="status">Status</Label>
+                                          <Select
+                                            defaultValue={apt.status}
+                                            onValueChange={(value) => handleStatusUpdate(apt.id, value)}
+                                          >
+                                            <SelectTrigger id="status">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="pending">Pending</SelectItem>
+                                              <SelectItem value="confirmed">Confirmed</SelectItem>
+                                              <SelectItem value="completed">Completed</SelectItem>
+                                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                  
+                                  {/* Send Reminder Button */}
+                                  <motion.div whileHover={{ scale: 1.1, rotate: 10 }} whileTap={{ scale: 0.9 }}>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => sendReminder(apt)}
+                                      className="hover:bg-green-50 hover:text-green-600 hover-lift shadow-sm"
+                                    >
+                                      <Mail className="h-4 w-4" />
+                                    </Button>
+                                  </motion.div>
+                                  
+                                  {/* Delete Button */}
+                                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedIds(new Set([apt.id]));
+                                        setShowDeleteDialog(true);
+                                      }}
+                                      className="text-destructive hover:bg-destructive/10 hover-lift"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </motion.div>
+                                </div>
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </div>
+                    {filteredAppointments.length === 0 && (
+                      <div className="text-center py-12">
+                        <div className="text-muted-foreground mb-4">
+                          <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium">No appointments found</h3>
+                          <p className="mt-2">Try adjusting your search or filters</p>
+                        </div>
+                        {(filterService !== "all" || filterDate || searchTerm) && (
+                          <Button variant="outline" onClick={clearFilters}>
+                            Clear filters
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
