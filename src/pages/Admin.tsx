@@ -1,3 +1,4 @@
+// Admin.tsx (PATCHED) — paste over your existing file
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -81,6 +82,34 @@ interface Stats {
   upcoming_count: number;
   paid_count: number;
   total_revenue: number;
+}
+
+const SUPABASE_FUNCTIONS_BASE = import.meta.env.VITE_SUPABASE_FUNCTIONS_BASE || "https://qhocfxggmhmrbyezmhsg.supabase.co/functions/v1";
+
+async function callAdminFn(payload: any) {
+  // Get the current session to include the auth token
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    console.error("No auth token available");
+    return { success: false, error: "Authentication required" };
+  }
+
+  const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/admin-appointments`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  try {
+    return await res.json();
+  } catch {
+    return { success: false, error: "Invalid JSON response from admin function" };
+  }
 }
 
 const Admin = () => {
@@ -171,77 +200,54 @@ const Admin = () => {
 
   const fetchStats = async () => {
     console.log("Fetching stats...");
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*");
-
-    console.log("Stats fetch result:", { count: data?.length || 0, error: error?.message });
-
-    if (error) {
-      console.error("Stats fetch error:", error);
-      toast.error(`Failed to fetch stats: ${error.message}`);
+    // We'll call the admin function to get appointments and compute stats locally
+    const res = await callAdminFn({ action: "get" });
+    if (!res.success) {
+      toast.error("Failed to fetch stats: " + (res.error || "unknown"));
       return;
     }
-
-    if (data) {
-      const today = new Date().toISOString().split('T')[0];
-      const stats: Stats = {
-        today_count: data.filter(apt => apt.appointment_date === today).length,
-        upcoming_count: data.filter(apt => apt.appointment_date > today).length,
-        paid_count: data.filter(apt => apt.payment_status === 'paid').length,
-        total_revenue: data.filter(apt => apt.payment_status === 'paid').length * 25
-      };
-      console.log("Calculated stats:", stats);
-      setStats(stats);
-    }
+    const data: Appointment[] = res.data || [];
+    const today = new Date().toISOString().split('T')[0];
+    const stats: Stats = {
+      today_count: data.filter(apt => apt.appointment_date === today).length,
+      upcoming_count: data.filter(apt => apt.appointment_date > today).length,
+      paid_count: data.filter(apt => apt.payment_status === 'paid').length,
+      total_revenue: data.filter(apt => apt.payment_status === 'paid').length * 25
+    };
+    setStats(stats);
   };
 
   const fetchAppointments = async () => {
-    console.log("Fetching appointments...");
-    
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    console.log("Appointments fetch result:", { 
-      count: data?.length || 0, 
-      error: error?.message,
-      data: data 
-    });
-
-    if (error) {
-      console.error("Appointments fetch error:", error);
-      toast.error(`Failed to fetch appointments: ${error.message}`);
+    console.log("Fetching appointments via admin function...");
+    const res = await callAdminFn({ action: "get" });
+    if (!res.success) {
+      toast.error("Failed to fetch appointments: " + (res.error || "unknown"));
       return;
     }
-
+    const data: Appointment[] = res.data || [];
     if (!data || data.length === 0) {
-      console.warn("No appointments found in database");
       toast.info("No appointments found");
     }
-
-    setAppointments(data || []);
-    setFilteredAppointments(data || []);
+    setAppointments(data);
+    setFilteredAppointments(data);
   };
 
   const fetchWorkingHours = async () => {
-    const { data } = await supabase
-      .from("working_hours")
-      .select("*")
-      .order("day_of_week");
-    
-    setWorkingHours(data || []);
+    const res = await callAdminFn({ action: "get-working-hours" });
+    if (!res.success) {
+      toast.error("Failed to fetch working hours: " + (res.error || "unknown"));
+      return;
+    }
+    setWorkingHours(res.data || []);
   };
 
   const fetchBlockedDates = async () => {
-    const { data } = await supabase
-      .from("blocked_dates")
-      .select("*")
-      .order("blocked_date");
-    
-    setBlockedDates(data || []);
+    const res = await callAdminFn({ action: "get-blocked-dates" });
+    if (!res.success) {
+      toast.error("Failed to fetch blocked dates: " + (res.error || "unknown"));
+      return;
+    }
+    setBlockedDates(res.data || []);
   };
 
   useEffect(() => {
@@ -271,7 +277,6 @@ const Admin = () => {
 
   const toggleSelectAll = (checked?: boolean) => {
     setSelectedIds(prev => {
-      // if explicit checked value provided, use it; otherwise toggle based on current state
       const selectAll = typeof checked === 'boolean' ? checked : !isAllSelected;
       if (!selectAll) return new Set();
       return new Set(filteredAppointments.map(a => a.id));
@@ -284,35 +289,26 @@ const Admin = () => {
 
     setDeleting(true);
     try {
-      // Request deleted rows back so we can verify deletion succeeded
-      const { data: deleted, error } = await supabase
-        .from('appointments')
-        .delete()
-        .in('id', targetIds)
-        .select('*');
-
-      if (error) {
-        console.error('Delete error', error);
-        return { success: false, message: error.message };
+      const res = await callAdminFn({ action: "delete", ids: targetIds });
+      if (!res.success) {
+        console.error('Delete error', res.error);
+        return { success: false, message: res.error || "Delete failed" };
       }
 
-      // If no rows returned, deletion may have been blocked by RLS or not found
-      if (!deleted || deleted.length === 0) {
+      if (!res.data || res.data.length === 0) {
         return { success: false, message: 'No rows deleted. Check permissions or IDs.' };
       }
 
-      // Refresh UI
       await fetchAppointments();
       await fetchStats();
       setSelectedIds(new Set());
-      return { success: true, message: `Deleted ${deleted.length} appointment(s)` };
+      return { success: true, message: `Deleted ${res.data.length} appointment(s)` };
     } finally {
       setDeleting(false);
     }
   };
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
-    // Validate input
     try {
       statusSchema.parse(newStatus);
     } catch (error) {
@@ -320,13 +316,9 @@ const Admin = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status: newStatus })
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Failed to update status");
+    const res = await callAdminFn({ action: "update", id, data: { status: newStatus } });
+    if (!res.success) {
+      toast.error("Failed to update status: " + (res.error || "unknown"));
       return;
     }
 
@@ -341,7 +333,6 @@ const Admin = () => {
       return;
     }
 
-    // Validate inputs
     try {
       dateSchema.parse(newBlockedDate);
       reasonSchema.parse(newBlockedReason);
@@ -350,15 +341,14 @@ const Admin = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("blocked_dates")
-      .insert({ 
-        blocked_date: newBlockedDate, 
-        reason: newBlockedReason.trim() || null 
-      });
+    const res = await callAdminFn({
+      action: "add-blocked-date",
+      blocked_date: newBlockedDate,
+      reason: newBlockedReason.trim() || null
+    });
 
-    if (error) {
-      toast.error("Failed to add blocked date");
+    if (!res.success) {
+      toast.error("Failed to add blocked date: " + (res.error || "unknown"));
       return;
     }
 
@@ -369,13 +359,9 @@ const Admin = () => {
   };
 
   const handleDeleteBlockedDate = async (id: string) => {
-    const { error } = await supabase
-      .from("blocked_dates")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Failed to delete blocked date");
+    const res = await callAdminFn({ action: "delete-blocked-date", id });
+    if (!res.success) {
+      toast.error("Failed to delete blocked date: " + (res.error || "unknown"));
       return;
     }
 
@@ -384,7 +370,6 @@ const Admin = () => {
   };
 
   const handleUpdateWorkingHours = async (id: string, field: string, value: any) => {
-    // Validate time fields
     if ((field === 'start_time' || field === 'end_time') && typeof value === 'string') {
       try {
         timeSchema.parse(value);
@@ -394,20 +379,15 @@ const Admin = () => {
       }
     }
 
-    // Validate allowed fields
     const allowedFields = ['start_time', 'end_time', 'slot_duration', 'is_active'];
     if (!allowedFields.includes(field)) {
       toast.error("Invalid field");
       return;
     }
 
-    const { error } = await supabase
-      .from("working_hours")
-      .update({ [field]: value })
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Failed to update working hours");
+    const res = await callAdminFn({ action: "update-working-hour", id, field, value });
+    if (!res.success) {
+      toast.error("Failed to update working hours: " + (res.error || "unknown"));
       return;
     }
 
@@ -444,21 +424,11 @@ const Admin = () => {
   };
 
   const sendReminder = async (appointment: Appointment) => {
-    const { error } = await supabase.functions.invoke('send-confirmation-email', {
-      body: {
-        to: appointment.email,
-        name: appointment.full_name,
-        appointmentDate: appointment.appointment_date,
-        appointmentTime: appointment.appointment_time,
-        services: appointment.services,
-      },
-    });
-
-    if (error) {
-      toast.error("Failed to send reminder");
+    const res = await callAdminFn({ action: "send-reminder", appointmentId: appointment.id });
+    if (!res.success) {
+      toast.error("Failed to send reminder: " + (res.error || "unknown"));
       return;
     }
-
     toast.success("Reminder sent successfully");
   };
 
@@ -562,7 +532,7 @@ const Admin = () => {
                   </Card>
                 </motion.div>
 
-                <motion.div
+                 <motion.div
                   whileHover={{ scale: 1.05, y: -5 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
