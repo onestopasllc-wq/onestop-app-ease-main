@@ -175,9 +175,13 @@ serve(async (req) => {
       const { appointmentId } = body;
       if (!appointmentId) return new Response(JSON.stringify({ success: false, error: "Missing appointmentId" }), { status: 400, headers: corsHeaders });
 
+      // Include caller/admin email so the confirmation function can avoid emailing the admin
+      const callerEmail = (adminCheck.user && adminCheck.user.email) || null;
+      console.log('Invoking send-confirmation-email for reminder', { appointmentId, callerEmail });
+
       // We invoke existing function (make sure it exists and is deployed)
       const invokeRes = await supabase.functions.invoke("send-confirmation-email", {
-        body: JSON.stringify({ appointmentId }),
+        body: JSON.stringify({ appointmentId, callerEmail }),
       });
 
       if ((invokeRes as any).error) throw (invokeRes as any).error;

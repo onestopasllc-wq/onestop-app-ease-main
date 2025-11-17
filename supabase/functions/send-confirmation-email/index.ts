@@ -30,7 +30,7 @@ serve(async (req) => {
 
     const payload = await req.json().catch(() => ({}));
 
-    // Support two invocation shapes:
+  // Support two invocation shapes:
     // 1) Full payload { to, name, appointmentDate, appointmentTime, services }
     // 2) { appointmentId } - function will fetch appointment details from DB
     let to: string | undefined = payload.to;
@@ -38,6 +38,8 @@ serve(async (req) => {
     let appointmentDate: string | undefined = payload.appointmentDate;
     let appointmentTime: string | undefined = payload.appointmentTime;
     let services: string[] | undefined = payload.services;
+  // optional caller/admin email (used to avoid emailing the admin who triggered a reminder)
+  const callerEmail: string | undefined = payload.callerEmail;
 
     if (payload.appointmentId) {
       if (!supabase) {
@@ -60,6 +62,12 @@ serve(async (req) => {
       appointmentDate = appointment.appointment_date;
       appointmentTime = appointment.appointment_time;
       services = appointment.services;
+      // If the request included a callerEmail and it matches the appointment email,
+      // we will skip sending the client email (admin likely triggered the reminder)
+      const skipClientEmail = callerEmail && callerEmail === appointment.email;
+      if (skipClientEmail) console.log('Skipping client email because callerEmail matches appointment email', { callerEmail, appointmentId: payload.appointmentId });
+      // Attach skip flag to payload so later logic can reference it
+      (payload as any)._skipClientEmail = !!skipClientEmail;
     }
 
     if (!to || !name || !appointmentDate || !appointmentTime || !services) {
@@ -71,7 +79,7 @@ serve(async (req) => {
   // Sender email should be a verified address on your verified domain (e.g. notifications@onestopasllc.com)
   const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'notifications@onestopasllc.com';
   // Public logo URL used in emails (must be accessible from the internet)
-  const SENDER_LOGO_URL = Deno.env.get('SENDER_LOGO_URL') || 'https://onestopasllc.com/assets/Application_Services-removebg-preview.png';
+  const SENDER_LOGO_URL = Deno.env.get('SENDER_LOGO_URL') || 'https://qhocfxggmhmrbyezmhsg.supabase.co/storage/v1/object/public/LOGO/Application%20Services.png';
 
   console.log('Sending confirmation email to:', to, 'from:', SENDER_EMAIL, 'logo:', SENDER_LOGO_URL);
 
@@ -116,27 +124,36 @@ serve(async (req) => {
     </body>
     </html>`;
 
-    // send client email
-    try {
-      const clientRes = await resend.emails.send({
-        from: `${SENDER_EMAIL}`,
-        to: [to],
-        subject: "Appointment Confirmation - OneStop Application Services LLC",
-        html,
-      });
-      console.log('Resend client send response:', JSON.stringify(clientRes));
-    } catch (sendErr: any) {
-      console.error('Resend client send failed:', sendErr?.message || sendErr);
-      return new Response(JSON.stringify({ error: 'Failed to send client email', details: String(sendErr) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // send client email (unless explicitly skipped because caller/admin matches the client)
+    if (!(payload as any)._skipClientEmail) {
+      try {
+        const clientRes = await resend.emails.send({
+          from: `${SENDER_EMAIL}`,
+          to: [to],
+          subject: "Appointment Confirmation - OneStop Application Services LLC",
+          html,
+        });
+        console.log('Resend client send response:', JSON.stringify(clientRes));
+      } catch (sendErr: any) {
+        console.error('Resend client send failed:', sendErr?.message || sendErr);
+        return new Response(JSON.stringify({ error: 'Failed to send client email', details: String(sendErr) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    } else {
+      console.log('Client email send skipped for appointmentId:', payload.appointmentId || '(unknown)');
     }
 
-    // send internal notification
+    // send internal notification to team (include both addresses)
     try {
+      const teamRecipients = [
+        'onestopapplicationservicesllc@gmail.com',
+        'onestopasllc@gmail.com'
+      ];
+
       const internalRes = await resend.emails.send({
         from: `${SENDER_EMAIL}`,
-        to: ["onestopapplicationservicesllc@gmail.com"],
+        to: teamRecipients,
         subject: `New Appointment: ${name}`,
-        html: `<p>New appointment from ${name} (${to}) on ${appointmentDate} at ${appointmentTime}</p><p>Services: ${(services as string[]).join(', ')}</p>`,
+        html: `<p>New appointment from <strong>${name}</strong> (${to}) on <strong>${appointmentDate}</strong> at <strong>${appointmentTime}</strong></p><p>Services: ${(services as string[]).join(', ')}</p><p>File URL: ${payload.fileUrl || 'N/A'}</p>`,
       });
       console.log('Resend internal send response:', JSON.stringify(internalRes));
     } catch (sendErr: any) {

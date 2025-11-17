@@ -449,14 +449,23 @@ const Admin = () => {
     toast.success("CSV exported successfully");
   };
 
-  const sendReminder = async (appointment: Appointment) => {
-    const res = await callAdminFn({ action: "send-reminder", appointmentId: appointment.id });
-    if (!res.success) {
-      toast.error("Failed to send reminder: " + (res.error || "unknown"));
-      return;
+ const sendReminder = async (appointment: Appointment) => {
+  // Use the send-confirmation-email function but mark it as a reminder
+  const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
+    body: { 
+      appointmentId: appointment.id,
+      isReminder: true,  // This tells the function it's a reminder, not a new booking
+      callerEmail: user?.email  // Include admin email to prevent duplicate emails
     }
-    toast.success("Reminder sent successfully");
-  };
+  });
+
+  if (error) {
+    toast.error("Failed to send reminder: " + error.message);
+    return;
+  }
+
+  toast.success("Reminder sent successfully to client");
+};
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
