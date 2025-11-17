@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,75 +14,151 @@ serve(async (req) => {
 
   try {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
     if (!resendApiKey) {
-      throw new Error('RESEND_API_KEY not configured');
+      console.error('RESEND_API_KEY missing in function env');
+      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const resend = new Resend(resendApiKey);
-    const { to, name, appointmentDate, appointmentTime, services } = await req.json();
+    // Prepare Supabase admin client if caller provides an appointmentId
+    let supabase: any = null;
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    }
 
-    console.log('Sending confirmation email to:', to);
+    const payload = await req.json().catch(() => ({}));
 
-    const clientEmail = await resend.emails.send({
-      from: "OneStop Application Services <onboarding@resend.dev>",
-      to: [to],
-      subject: "Appointment Confirmation - OneStop Application Services LLC",
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: 'Lato', sans-serif; line-height: 1.6; color: #1A365D; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #1A365D, #00B5AD); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
-            .info-box { background: #F5F6FA; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #00B5AD; }
-            .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1 style="margin: 0; font-size: 28px;">🎓 Appointment Confirmed!</h1>
-              <p style="margin: 10px 0 0 0;">OneStop Application Services LLC</p>
-            </div>
-            <div class="content">
-              <p>Dear ${name},</p>
-              <p><strong>Thank you for booking with OneStop Application Services LLC!</strong></p>
-              <div class="info-box">
-                <p><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>🕐 Time:</strong> ${appointmentTime}</p>
-                <p><strong>📋 Services:</strong></p>
-                <ul>${services.map((s: string) => `<li>${s}</li>`).join('')}</ul>
-              </div>
-              <p>We look forward to helping you achieve your goals!</p>
-              <p>Best regards,<br><strong>The OneStop Team</strong></p>
-            </div>
-            <div class="footer">
-              <p>© ${new Date().getFullYear()} OneStop Application Services LLC</p>
-            </div>
+    // Support two invocation shapes:
+    // 1) Full payload { to, name, appointmentDate, appointmentTime, services }
+    // 2) { appointmentId } - function will fetch appointment details from DB
+    let to: string | undefined = payload.to;
+    let name: string | undefined = payload.name;
+    let appointmentDate: string | undefined = payload.appointmentDate;
+    let appointmentTime: string | undefined = payload.appointmentTime;
+    let services: string[] | undefined = payload.services;
+
+    if (payload.appointmentId) {
+      if (!supabase) {
+        return new Response(JSON.stringify({ error: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const { data: appointment, error: fetchErr } = await supabase
+        .from('appointments')
+        .select('full_name, email, appointment_date, appointment_time, services')
+        .eq('id', payload.appointmentId)
+        .maybeSingle();
+
+      if (fetchErr || !appointment) {
+        console.error('Appointment lookup failed', fetchErr);
+        return new Response(JSON.stringify({ error: 'Appointment not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      to = appointment.email;
+      name = appointment.full_name;
+      appointmentDate = appointment.appointment_date;
+      appointmentTime = appointment.appointment_time;
+      services = appointment.services;
+    }
+
+    if (!to || !name || !appointmentDate || !appointmentTime || !services) {
+      return new Response(JSON.stringify({ error: 'Missing required email fields' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+  const resend = new Resend(resendApiKey);
+
+  // Sender email should be a verified address on your verified domain (e.g. notifications@onestopasllc.com)
+  const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'notifications@onestopasllc.com';
+  // Public logo URL used in emails (must be accessible from the internet)
+  const SENDER_LOGO_URL = Deno.env.get('SENDER_LOGO_URL') || 'https://onestopasllc.com/assets/Application_Services-removebg-preview.png';
+
+  console.log('Sending confirmation email to:', to, 'from:', SENDER_EMAIL, 'logo:', SENDER_LOGO_URL);
+
+  const html = `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Lato', sans-serif; line-height: 1.6; color: #1A365D; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #1A365D, #00B5AD); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
+        .info-box { background: #F5F6FA; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #00B5AD; }
+        .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header" style="display:flex;align-items:center;gap:16px;">
+          <img src="${SENDER_LOGO_URL}" alt="OneStop logo" style="height:56px;width:auto;border-radius:6px;object-fit:contain;" />
+          <div>
+            <h1 style="margin: 0; font-size: 22px;">Appointment Confirmed</h1>
+            <p style="margin: 6px 0 0 0;font-size:14px;">OneStop Application Services LLC</p>
           </div>
-        </body>
-        </html>
-      `,
-    });
+        </div>
+        <div class="content">
+          <p>Dear ${name},</p>
+          <p><strong>Thank you for booking with OneStop Application Services LLC!</strong></p>
+          <div class="info-box">
+            <p><strong>📅 Date:</strong> ${new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p><strong>🕐 Time:</strong> ${appointmentTime}</p>
+            <p><strong>📋 Services:</strong></p>
+            <ul>${(services as string[]).map((s: string) => `<li>${s}</li>`).join('')}</ul>
+          </div>
+          <p>We look forward to helping you achieve your goals!</p>
+          <p>Best regards,<br><strong>The OneStop Team</strong></p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} OneStop Application Services LLC</p>
+        </div>
+      </div>
+    </body>
+    </html>`;
 
-    const companyEmail = await resend.emails.send({
-      from: "OneStop Notifications <onboarding@resend.dev>",
-      to: ["onestopapplicationservicesllc@gmail.com"],
-      subject: `New Appointment: ${name}`,
-      html: `<p>New appointment from ${name} (${to}) on ${appointmentDate} at ${appointmentTime}</p><p>Services: ${services.join(', ')}</p>`,
-    });
+    // send client email
+    try {
+      const clientRes = await resend.emails.send({
+        from: `${SENDER_EMAIL}`,
+        to: [to],
+        subject: "Appointment Confirmation - OneStop Application Services LLC",
+        html,
+      });
+      console.log('Resend client send response:', JSON.stringify(clientRes));
+    } catch (sendErr: any) {
+      console.error('Resend client send failed:', sendErr?.message || sendErr);
+      return new Response(JSON.stringify({ error: 'Failed to send client email', details: String(sendErr) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // send internal notification
+    try {
+      const internalRes = await resend.emails.send({
+        from: `${SENDER_EMAIL}`,
+        to: ["onestopapplicationservicesllc@gmail.com"],
+        subject: `New Appointment: ${name}`,
+        html: `<p>New appointment from ${name} (${to}) on ${appointmentDate} at ${appointmentTime}</p><p>Services: ${(services as string[]).join(', ')}</p>`,
+      });
+      console.log('Resend internal send response:', JSON.stringify(internalRes));
+    } catch (sendErr: any) {
+      console.error('Resend internal send failed:', sendErr?.message || sendErr);
+      // don't fail the entire function if internal notification fails; just log
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error in send-confirmation-email:', error);
+    // If the error is an object with a message property that looks like JSON, try to return it as JSON
+    let message = error?.message || String(error);
+    try {
+      const parsed = JSON.parse(message);
+      return new Response(JSON.stringify({ error: parsed }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } catch {
+      return new Response(JSON.stringify({ error: message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
   }
 });
