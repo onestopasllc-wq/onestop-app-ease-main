@@ -27,6 +27,7 @@ export type Database = {
           full_name: string
           how_heard: string | null
           id: string
+          location: string
           payment_status: string | null
           phone: string | null
           services: string[]
@@ -44,6 +45,7 @@ export type Database = {
           full_name: string
           how_heard?: string | null
           id?: string
+          location: string
           payment_status?: string | null
           phone?: string | null
           services: string[]
@@ -61,6 +63,7 @@ export type Database = {
           full_name?: string
           how_heard?: string | null
           id?: string
+          location?: string
           payment_status?: string | null
           phone?: string | null
           services?: string[]

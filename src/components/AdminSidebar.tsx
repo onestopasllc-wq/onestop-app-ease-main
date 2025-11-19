@@ -49,7 +49,7 @@ export function AdminSidebar() {
 
   return (
     <Sidebar className={isCollapsed ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarHeader className="border-b border-border/50 p-4">
+      <SidebarHeader className="border-b border-border/50 p-4 bg-background/50 backdrop-blur-sm">
         {!isCollapsed && (
           <div className="space-y-1">
             <h2 className="text-lg font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -65,9 +65,9 @@ export function AdminSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-background/30 backdrop-blur-sm">
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel className={isCollapsed ? "sr-only" : "text-foreground/80 font-medium"}>
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -76,11 +76,11 @@ export function AdminSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => scrollToSection(item.url)}
-                    className="hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                    className="hover:bg-primary/20 hover:text-primary transition-all duration-200 cursor-pointer text-foreground font-medium"
                     tooltip={isCollapsed ? item.title : undefined}
                   >
-                    <item.icon className={isCollapsed ? "h-5 w-5" : "h-4 w-4"} />
-                    {!isCollapsed && <span>{item.title}</span>}
+                    <item.icon className={`${isCollapsed ? "h-5 w-5" : "h-4 w-4"} text-primary/80`} />
+                    {!isCollapsed && <span className="text-foreground">{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -89,14 +89,14 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/50 p-4">
+      <SidebarFooter className="border-t border-border/50 p-4 bg-background/50 backdrop-blur-sm">
         <Button
           variant="ghost"
           onClick={handleSignOut}
-          className="w-full justify-start hover:bg-destructive/10 hover:text-destructive"
+          className="w-full justify-start hover:bg-destructive/20 hover:text-destructive transition-all duration-200 text-foreground font-medium"
         >
-          <LogOut className={isCollapsed ? "h-5 w-5" : "h-4 w-4 mr-2"} />
-          {!isCollapsed && <span>Sign Out</span>}
+          <LogOut className={`${isCollapsed ? "h-5 w-5" : "h-4 w-4 mr-2"} text-destructive/80`} />
+          {!isCollapsed && <span className="text-foreground">Sign Out</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

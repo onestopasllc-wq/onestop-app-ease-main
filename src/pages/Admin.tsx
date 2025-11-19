@@ -61,6 +61,7 @@ interface Appointment {
   email: string;
   phone: string | null;
   contact_method: string;
+  location: string;
   services: string[];
   description: string | null;
   appointment_date: string;
@@ -147,6 +148,25 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // Helper function to format time with AM/PM
+  const formatTime = (timeString: string) => {
+    try {
+      // Parse the time string (assuming format HH:mm or HH:mm:ss)
+      const [hours, minutes] = timeString.split(':');
+      const hour24 = parseInt(hours);
+      const minute = parseInt(minutes);
+      
+      // Convert to 12-hour format
+      const period = hour24 >= 12 ? 'PM' : 'AM';
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      
+      return `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
+    } catch (error) {
+      // Fallback to original time if parsing fails
+      return timeString;
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -419,17 +439,18 @@ const Admin = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Date", "Time", "Name", "Email", "Phone", "Services", "Status", "Payment Status", "Contact Method", "How Heard", "Description"];
+    const headers = ["Date", "Time", "Name", "Email", "Phone", "Contact Method", "Location", "Services", "Status", "Payment Status", "How Heard", "Description"];
     const rows = filteredAppointments.map(apt => [
       apt.appointment_date,
-      apt.appointment_time,
+      formatTime(apt.appointment_time),
       apt.full_name,
       apt.email,
       apt.phone || "",
+      apt.contact_method,
+      apt.location,
       apt.services.join("; "),
       apt.status,
       apt.payment_status || "",
-      apt.contact_method,
       apt.how_heard || "",
       apt.description || ""
     ]);
@@ -836,7 +857,7 @@ const Admin = () => {
                                   <div key={a.id} className="flex items-center justify-between p-2 rounded-md bg-muted/10">
                                     <div>
                                       <div className="font-medium">{a.full_name}</div>
-                                      <div className="text-sm text-muted-foreground">{a.appointment_date} {a.appointment_time}</div>
+                                      <div className="text-sm text-muted-foreground">{a.appointment_date} {formatTime(a.appointment_time)}</div>
                                     </div>
                                   </div>
                                 ))}
@@ -920,7 +941,7 @@ const Admin = () => {
                                     <div className="font-medium">{apt.appointment_date}</div>
                                     <div className="text-sm text-muted-foreground flex items-center gap-1">
                                       <ClockIcon className="h-3 w-3" />
-                                      {apt.appointment_time}
+                                      {formatTime(apt.appointment_time)}
                                     </div>
                                   </div>
                                 </div>
@@ -1006,6 +1027,10 @@ const Admin = () => {
                                                 <Label className="text-sm text-muted-foreground">Contact Method</Label>
                                                 <p className="font-medium">{viewingAppointment.contact_method}</p>
                                               </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">Location</Label>
+                                                <p className="font-medium">{viewingAppointment.location}</p>
+                                              </div>
                                             </div>
                                           </div>
 
@@ -1037,7 +1062,7 @@ const Admin = () => {
                                               </div>
                                               <div>
                                                 <Label className="text-sm text-muted-foreground">Time</Label>
-                                                <p className="font-medium">{viewingAppointment.appointment_time}</p>
+                                                <p className="font-medium">{formatTime(viewingAppointment.appointment_time)}</p>
                                               </div>
                                               <div>
                                                 <Label className="text-sm text-muted-foreground">How They Heard About Us</Label>
@@ -1117,7 +1142,7 @@ const Admin = () => {
                                       <div className="space-y-4 py-4">
                                         <div className="space-y-2">
                                           <Label>Customer: {apt.full_name}</Label>
-                                          <Label>Date: {apt.appointment_date} at {apt.appointment_time}</Label>
+                                          <Label>Date: {apt.appointment_date} at {formatTime(apt.appointment_time)}</Label>
                                         </div>
                                         <div className="space-y-2">
                                           <Label htmlFor="status">Status</Label>

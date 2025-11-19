@@ -26,6 +26,39 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// List of world countries for the location dropdown
+const COUNTRIES = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", 
+  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", 
+  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", 
+  "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", 
+  "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", 
+  "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", 
+  "Cuba", "Cyprus", "Czech Republic", "Democratic Republic of the Congo", "Denmark", 
+  "Djibouti", "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt", 
+  "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", 
+  "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", 
+  "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", 
+  "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", 
+  "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", 
+  "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", 
+  "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", 
+  "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", 
+  "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", 
+  "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", 
+  "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", 
+  "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", 
+  "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", 
+  "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", 
+  "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", 
+  "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", 
+  "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", 
+  "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", 
+  "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", 
+  "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", 
+  "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+];
+
 const services = [
   // "Visa Form Preparation (Non-Legal)",
   "College & University Application Support",
@@ -40,6 +73,7 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address").max(255),
   phone: z.string().optional(),
   contactMethod: z.string().min(1, "Please select a contact method"),
+  location: z.string().min(1, "Please select your country"),
   services: z.array(z.string()).min(1, "Please select at least one service"),
   description: z.string().max(1000).optional(),
   appointmentDate: z.date({ required_error: "Please select a date" }),
@@ -66,6 +100,7 @@ export default function Appointment() {
       email: "",
       phone: "",
       contactMethod: "",
+      location: "",
       services: [],
       description: "",
       appointmentDate: undefined,
@@ -237,6 +272,7 @@ export default function Appointment() {
           email: data.email,
           phone: data.phone || null,
           contact_method: data.contactMethod,
+          location: data.location,
           services: data.services,
           description: data.description || null,
           appointment_date: format(data.appointmentDate, 'yyyy-MM-dd'),
@@ -449,6 +485,7 @@ export default function Appointment() {
                                 <SelectItem value="email">Email</SelectItem>
                                 <SelectItem value="phone">Phone</SelectItem>
                                 <SelectItem value="telegram">Telegram</SelectItem>
+                                <SelectItem value="whatsapp">WhatsApp</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -456,6 +493,31 @@ export default function Appointment() {
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Country/Location *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select your country" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="max-h-[200px]">
+                              {COUNTRIES.map((country) => (
+                                <SelectItem key={country} value={country}>
+                                  {country}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   <div className="border-t my-6"></div>
