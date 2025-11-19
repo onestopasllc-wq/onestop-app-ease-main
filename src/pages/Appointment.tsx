@@ -343,25 +343,25 @@ export default function Appointment() {
         console.error('WhatsApp notification failed:', error);
       });
 
-      // Create Stripe checkout session
-      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-        'create-checkout',
-        {
-          body: { appointmentId: appointment.id },
-        }
-      );
+      // TODO: Stripe checkout - temporarily disabled, using Square payment instead
+      // const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+      //   'create-checkout',
+      //   {
+      //     body: { appointmentId: appointment.id },
+      //   }
+      // );
+      // if (checkoutError) throw checkoutError;
+      // if (checkoutData?.url) {
+      //   window.open(checkoutData.url, '_blank');
+      // }
 
-      if (checkoutError) throw checkoutError;
-
-      // Redirect to Stripe checkout
-      if (checkoutData?.url) {
-        window.open(checkoutData.url, '_blank');
-        
-        toast({
-          title: "Appointment Created!",
-          description: "Redirecting to payment page...",
-        });
-      }
+      // Redirect to Square payment temporarily
+      window.open('https://square.link/u/eEJaCnU3?src=sheet', '_blank');
+      
+      toast({
+        title: "Appointment Created!",
+        description: "Redirecting to payment page...",
+      });
     } catch (error: any) {
       console.error('Error creating appointment:', error);
       toast({
