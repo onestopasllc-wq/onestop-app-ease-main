@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Upload, CheckCircle2, Clock, Info } from "lucide-react";
-import { SocialIcon } from "react-social-icons";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +25,7 @@ import SEO from "@/components/SEO";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SocialIcon } from "react-social-icons";
 
 // List of world countries for the location dropdown
 const COUNTRIES = [
@@ -344,20 +344,17 @@ export default function Appointment() {
         console.error('WhatsApp notification failed:', error);
       });
 
-      // TODO: Stripe checkout - temporarily disabled, using Square payment instead
-      // const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-      //   'create-checkout',
-      //   {
-      //     body: { appointmentId: appointment.id },
-      //   }
-      // );
-      // if (checkoutError) throw checkoutError;
-      // if (checkoutData?.url) {
-      //   window.open(checkoutData.url, '_blank');
-      // }
-
-      // Redirect to Square payment temporarily
-      window.open('https://square.link/u/eEJaCnU3?src=sheet', '_blank');
+      // Stripe checkout
+      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+        'create-checkout',
+        {
+          body: { appointmentId: appointment.id },
+        }
+      );
+      if (checkoutError) throw checkoutError;
+      if (checkoutData?.url) {
+        window.open(checkoutData.url, '_blank');
+      }
       
       toast({
         title: "Appointment Created!",
@@ -385,7 +382,7 @@ export default function Appointment() {
       <div className="min-h-screen relative overflow-hidden pt-20 pb-16">
         <AnimatedBackground />
         
-      <div className="container max-w-3xl mx-auto px-4 relative z-10 mb-10">
+      <div className="container max-w-3xl mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -805,9 +802,9 @@ export default function Appointment() {
           </motion.div>
         </motion.div>
       </div>
-      
-      {/* Social Media Section */}
-      <section className="py-16 px-4 bg-gradient-to-r from-gray-50 to-blue-50 relative z-10 mt-16">
+
+        {/* Social Media Section */}
+      <section className="py-20 px-4 bg-gradient-to-r from-gray-50 to-blue-50 relative z-10 mt-20 mb-16">
         <div className="container mx-auto max-w-4xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -921,7 +918,6 @@ export default function Appointment() {
           </motion.div>
         </div>
       </section>
-      
       </div>
       <div className="relative z-10">
         <Footer />
