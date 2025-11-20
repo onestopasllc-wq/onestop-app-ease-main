@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, Send, MapPin } from "lucide-react";
+import { SocialIcon } from "react-social-icons";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -63,17 +64,17 @@ const Contact = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="gradient-primary py-24 px-4">
+      <section className="gradient-primary py-16 sm:py-20 lg:py-24 px-4">
         <div className="container mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
               Get In Touch
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed px-4">
               Have questions? We're here to help you every step of the way.
             </p>
           </motion.div>
@@ -81,9 +82,9 @@ const Contact = () => {
       </section>
 
       {/* Contact Content */}
-      <section className="py-24 px-4">
+      <section className="py-16 sm:py-20 lg:py-24 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Contact Form */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -94,7 +95,7 @@ const Contact = () => {
               <div className="inline-block mb-4 px-4 py-2 bg-secondary/10 rounded-full">
                 <span className="text-secondary font-semibold">Send Us a Message</span>
               </div>
-              <h2 className="text-4xl font-bold mb-6 text-primary">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 text-primary">
                 Quick Contact Form
               </h2>
               <p className="text-muted-foreground mb-8 leading-relaxed">
@@ -161,7 +162,7 @@ const Contact = () => {
               <div className="inline-block mb-4 px-4 py-2 bg-secondary/10 rounded-full">
                 <span className="text-secondary font-semibold">Contact Information</span>
               </div>
-              <h2 className="text-4xl font-bold mb-6 text-primary">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 text-primary">
                 Reach Us Directly
               </h2>
               <p className="text-muted-foreground mb-8 leading-relaxed">
@@ -209,7 +210,7 @@ const Contact = () => {
                         <h3 className="font-bold text-lg mb-2 text-primary">Email</h3>
                         <a
                           href="mailto:onestopapplicationservicesllc@gmail.com"
-                          className="text-muted-foreground hover:text-secondary transition-smooth break-all"
+                          className="text-muted-foreground hover:text-secondary transition-smooth break-words text-sm sm:text-base"
                         >
                           onestopapplicationservicesllc@gmail.com
                         </a>
@@ -287,7 +288,7 @@ const Contact = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
               Ready to Start Your Application?
             </h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
@@ -298,6 +299,122 @@ const Contact = () => {
                 Book Appointment
               </Button>
             </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Social Media Section */}
+      <section className="py-16 px-4 bg-gradient-to-r from-gray-50 to-blue-50">
+        <div className="container mx-auto max-w-4xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-primary">
+              Stay Connected With Us
+            </h2>
+            <p className="text-muted-foreground mb-8 text-base sm:text-lg">
+              Follow us on social media for updates, tips, and success stories
+            </p>
+            
+            <div className="flex justify-center items-center gap-4 sm:gap-6 flex-wrap">
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://t.me/OneStop_Application_Services_LLC"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Telegram
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://wa.me/15716604984"
+                  network="whatsapp"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  WhatsApp
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://facebook.com/onestopapplicationservices"
+                  network="facebook"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Facebook
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://instagram.com/onestopapplicationservices"
+                  network="instagram"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Instagram
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://youtube.com/@onestopapplicationservices"
+                  network="youtube"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  YouTube
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://tiktok.com/@onestopapplicationservices"
+                  network="tiktok"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  TikTok
+                </span>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>

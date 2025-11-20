@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Upload, CheckCircle2, Clock, Info } from "lucide-react";
+import { SocialIcon } from "react-social-icons";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -384,7 +385,7 @@ export default function Appointment() {
       <div className="min-h-screen relative overflow-hidden pt-20 pb-16">
         <AnimatedBackground />
         
-      <div className="container max-w-3xl mx-auto px-4 relative z-10">
+      <div className="container max-w-3xl mx-auto px-4 relative z-10 mb-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -804,6 +805,123 @@ export default function Appointment() {
           </motion.div>
         </motion.div>
       </div>
+      
+      {/* Social Media Section */}
+      <section className="py-16 px-4 bg-gradient-to-r from-gray-50 to-blue-50 relative z-10 mt-16">
+        <div className="container mx-auto max-w-4xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-primary">
+              Stay Connected With Us
+            </h2>
+            <p className="text-muted-foreground mb-8 text-base sm:text-lg">
+              Follow us on social media for updates, tips, and success stories
+            </p>
+            
+            <div className="flex justify-center items-center gap-4 sm:gap-6 flex-wrap">
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://t.me/OneStop_Application_Services_LLC"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Telegram
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://wa.me/15716604984"
+                  network="whatsapp"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  WhatsApp
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://facebook.com/onestopapplicationservices"
+                  network="facebook"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Facebook
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://instagram.com/onestopapplicationservices"
+                  network="instagram"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Instagram
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://youtube.com/@onestopapplicationservices"
+                  network="youtube"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  YouTube
+                </span>
+              </motion.div>
+
+              <motion.div
+                className="group relative"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <SocialIcon 
+                  url="https://tiktok.com/@onestopapplicationservices"
+                  network="tiktok"
+                  className="shadow-lg group-hover:shadow-xl transition-all duration-300"
+                  style={{ height: 64, width: 64 }}
+                />
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  TikTok
+                </span>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      
       </div>
       <div className="relative z-10">
         <Footer />
@@ -811,5 +929,3 @@ export default function Appointment() {
     </>
   );
 }
-
-
