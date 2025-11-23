@@ -75,6 +75,8 @@ const formSchema = z.object({
   phone: z.string().optional(),
   contactMethod: z.string().min(1, "Please select a contact method"),
   location: z.string().min(1, "Please select your country"),
+  state: z.string().min(1, "State is required"),
+  city: z.string().min(1, "City is required"),
   services: z.array(z.string()).min(1, "Please select at least one service"),
   description: z.string().max(1000).optional(),
   appointmentDate: z.date({ required_error: "Please select a date" }),
@@ -102,6 +104,8 @@ export default function Appointment() {
       phone: "",
       contactMethod: "",
       location: "",
+      state: "",
+      city: "",
       services: [],
       description: "",
       appointmentDate: undefined,
@@ -274,6 +278,8 @@ export default function Appointment() {
           phone: data.phone || null,
           contact_method: data.contactMethod,
           location: data.location,
+          state: data.state,
+          city: data.city,
           services: data.services,
           description: data.description || null,
           appointment_date: format(data.appointmentDate, 'yyyy-MM-dd'),
@@ -516,6 +522,36 @@ export default function Appointment() {
                         </FormItem>
                       )}
                     />
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">State/Province *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., California, Ontario, etc." className="h-11" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">City *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Los Angeles, Toronto, etc." className="h-11" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
                   <div className="border-t my-6"></div>
@@ -873,7 +909,7 @@ export default function Appointment() {
                 whileTap={{ scale: 0.95 }}
               >
                 <SocialIcon 
-                  url="https://instagram.com/onestopapplicationservices"
+                  url="https://www.instagram.com/onestop_application_services?igsh=dXZrZXlkYjV1YXRh&utm_source=qr "
                   network="instagram"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                   style={{ height: 64, width: 64 }}

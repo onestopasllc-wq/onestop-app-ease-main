@@ -62,6 +62,8 @@ interface Appointment {
   phone: string | null;
   contact_method: string;
   location: string;
+  state: string;
+  city: string;
   services: string[];
   description: string | null;
   appointment_date: string;
@@ -300,6 +302,9 @@ const Admin = () => {
         apt.full_name.toLowerCase().includes(term) ||
         apt.email.toLowerCase().includes(term) ||
         (apt.phone && apt.phone.toLowerCase().includes(term)) ||
+        apt.location.toLowerCase().includes(term) ||
+        (apt.state && apt.state.toLowerCase().includes(term)) ||
+        (apt.city && apt.city.toLowerCase().includes(term)) ||
         apt.services.some(service => service.toLowerCase().includes(term))
       );
     }
@@ -439,7 +444,7 @@ const Admin = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Date", "Time", "Name", "Email", "Phone", "Contact Method", "Location", "Services", "Status", "Payment Status", "How Heard", "Description"];
+    const headers = ["Date", "Time", "Name", "Email", "Phone", "Contact Method", "Location", "State", "City", "Services", "Status", "Payment Status", "How Heard", "Description"];
     const rows = filteredAppointments.map(apt => [
       apt.appointment_date,
       formatTime(apt.appointment_time),
@@ -448,6 +453,8 @@ const Admin = () => {
       apt.phone || "",
       apt.contact_method,
       apt.location,
+      apt.state || "",
+      apt.city || "",
       apt.services.join("; "),
       apt.status,
       apt.payment_status || "",
@@ -760,7 +767,7 @@ const Admin = () => {
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="search"
-                          placeholder="Search by name, email, phone, or service..."
+                          placeholder="Search by name, email, phone, location, state, city, or service..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="pl-10"
@@ -956,6 +963,9 @@ const Admin = () => {
                                     <MessageSquare className="h-3 w-3" />
                                     {apt.contact_method}
                                   </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    📍 {apt.city || "N/A"}, {apt.state || "N/A"}, {apt.location}
+                                  </div>
                                   {apt.how_heard && (
                                     <div className="text-xs text-muted-foreground">
                                       Heard from: {apt.how_heard}
@@ -1028,8 +1038,16 @@ const Admin = () => {
                                                 <p className="font-medium">{viewingAppointment.contact_method}</p>
                                               </div>
                                               <div>
-                                                <Label className="text-sm text-muted-foreground">Location</Label>
+                                                <Label className="text-sm text-muted-foreground">Country</Label>
                                                 <p className="font-medium">{viewingAppointment.location}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">State/Province</Label>
+                                                <p className="font-medium">{viewingAppointment.state || "Not provided"}</p>
+                                              </div>
+                                              <div>
+                                                <Label className="text-sm text-muted-foreground">City</Label>
+                                                <p className="font-medium">{viewingAppointment.city || "Not provided"}</p>
                                               </div>
                                             </div>
                                           </div>
