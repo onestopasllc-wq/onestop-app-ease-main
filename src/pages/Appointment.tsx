@@ -638,6 +638,16 @@ export default function Appointment() {
                       <p className="text-sm text-muted-foreground mt-1">Available slots update in real-time</p>
                     </div>
 
+                    {/* USA Time Zone Notice */}
+                    <Alert className="border-blue-200 bg-blue-50/50">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-sm text-blue-800">
+                        <strong>Important:</strong> All appointment times are scheduled in{" "}
+                        <span className="font-semibold">USA Eastern Time (ET)</span>. Please ensure you
+                        convert to your local time zone when booking.
+                      </AlertDescription>
+                    </Alert>
+
                     <FormField
                       control={form.control}
                       name="appointmentDate"
