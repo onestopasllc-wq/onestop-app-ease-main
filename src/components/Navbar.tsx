@@ -15,6 +15,7 @@ const Navbar = () => {
     { to: "/appointment", label: "Book Now" },
     { to: "/testimonials", label: "Testimonials" },
     { to: "/faq", label: "FAQ" },
+    { to: "/job", label: "Jobs" },
     { to: "/contact", label: "Contact" },
   ];
 

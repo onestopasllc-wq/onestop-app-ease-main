@@ -1,4 +1,5 @@
 import { Mail, Phone, Send } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -15,6 +16,9 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Contact Us</h4>
             <div className="space-y-3">
+              <Link to="/job" className="block text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
+                Jobs
+              </Link>
               <a
                 href="tel:+15716604984"
                 className="flex items-center space-x-2 text-primary-foreground/80 hover:text-primary-foreground transition-smooth"
