@@ -8,7 +8,7 @@ interface SEOProps {
   ogImage?: string;
 }
 
-const SEO = ({ 
+const SEO = ({
   title = "OneStop Application Services LLC - We Make Applying Easy! 🎓💼",
   description = "Professional application support for visa forms, college admissions, document evaluations, licensing boards, job applications, and business licenses. Expert guidance to simplify your application process.",
   keywords = "application services, visa application help, college application support, document evaluation, licensing board applications, job application assistance, business license help, CGFNS application, nursing license application, professional application services",
@@ -22,12 +22,12 @@ const SEO = ({
   useEffect(() => {
     // Update document title
     document.title = fullTitle;
-    
+
     // Update or create meta tags
     const updateMeta = (name: string, content: string, isProperty = false) => {
       const attribute = isProperty ? 'property' : 'name';
       let element = document.querySelector(`meta[${attribute}="${name}"]`) as HTMLMetaElement;
-      
+
       if (!element) {
         element = document.createElement('meta');
         element.setAttribute(attribute, name);
@@ -39,21 +39,22 @@ const SEO = ({
     // Primary Meta Tags
     updateMeta('description', description);
     updateMeta('keywords', keywords);
-    
+    updateMeta('robots', 'index, follow');
+
     // Open Graph / Facebook
     updateMeta('og:type', 'website', true);
     updateMeta('og:url', canonicalUrl, true);
     updateMeta('og:title', fullTitle, true);
     updateMeta('og:description', description, true);
     updateMeta('og:image', `${siteUrl}${ogImage}`, true);
-    
+
     // Twitter
     updateMeta('twitter:card', 'summary_large_image', true);
     updateMeta('twitter:url', canonicalUrl, true);
     updateMeta('twitter:title', fullTitle, true);
     updateMeta('twitter:description', description, true);
     updateMeta('twitter:image', `${siteUrl}${ogImage}`, true);
-    
+
     // Update canonical link
     let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!canonicalLink) {
@@ -62,7 +63,7 @@ const SEO = ({
       document.head.appendChild(canonicalLink);
     }
     canonicalLink.href = canonicalUrl;
-    
+
     // Add structured data
     let scriptTag = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
     if (!scriptTag) {
@@ -70,7 +71,7 @@ const SEO = ({
       scriptTag.type = 'application/ld+json';
       document.head.appendChild(scriptTag);
     }
-    
+
     scriptTag.textContent = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "ProfessionalService",
