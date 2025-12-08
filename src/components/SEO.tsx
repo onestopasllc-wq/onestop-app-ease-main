@@ -11,7 +11,7 @@ interface SEOProps {
 const SEO = ({
   title = "OneStop Application Services LLC - We Make Applying Easy! 🎓💼",
   description = "Professional application support for visa forms, college admissions, document evaluations, licensing boards, job applications, and business licenses. Expert guidance to simplify your application process.",
-  keywords = "application services, visa application help, college application support, document evaluation, licensing board applications, job application assistance, business license help, CGFNS application, nursing license application, professional application services",
+  keywords = "onestopasllc, OneStopASLLC, OneStop AS LLC, application services, visa application help, college application support, document evaluation, licensing board applications, job application assistance, business license help, CGFNS application, nursing license application, professional application services",
   canonical,
   ogImage = "/og-image.jpg"
 }: SEOProps) => {
