@@ -16,7 +16,7 @@ const SEO = ({
   ogImage = "/og-image.jpg"
 }: SEOProps) => {
   const fullTitle = title.includes("OneStop") ? title : `${title} | OneStop Application Services LLC`;
-  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://onestop-services.lovable.app';
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.onestopasllc.com';
   const canonicalUrl = canonical || (typeof window !== 'undefined' ? window.location.href : siteUrl);
 
   useEffect(() => {
