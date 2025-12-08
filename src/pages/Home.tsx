@@ -8,46 +8,47 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import heroBg from "@/assets/hero-image.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
+import PromotionalPopup from "@/components/PromotionalPopup";
 
 const Home = () => {
- const services = [
-  // {
-  //   icon: <FileText className="w-12 h-12" />,
-  //   title: "Visa Form Assistance (Non-Legal)",
-  //   description:
-  //     "Expert support with visa application forms and documentation preparation. We guide you step-by-step to ensure accurate and complete submissions without providing legal advice.",
-  // },
-  {
-    icon: <GraduationCap className="w-12 h-12" />,
-    title: "College & University Application Support",
-    description:
-      "Personalized assistance for domestic and international college and university applications. From program selection to application preparation, we help you present a strong and compelling profile.",
-  },
-  {
-    icon: <Globe className="w-12 h-12" />,
-    title: "Credential & Document Evaluation Support",
-    description:
-      "Professional guidance with all major credential evaluation services. We help you prepare, organize, and submit the required documents for smooth and timely evaluations.",
-  },
-  {
-    icon: <UserCheck className="w-12 h-12" />,
-    title: "Licensing Board Application Support",
-    description:
-      "Comprehensive assistance for exam registrations and professional licensing board applications. We help you understand requirements, prepare documents, and complete every step correctly.",
-  },
-  {
-    icon: <Briefcase className="w-12 h-12" />,
-    title: "Job Application & Career Support",
-    description:
-      "Strategic support for job applications, résumé preparation, and career readiness. We help you confidently apply to positions that match your skills and goals.",
-  },
-  // {
-  //   icon: <Building2 className="w-12 h-12" />,
-  //   title: "Business License Application Support",
-  //   description:
-  //     "tComplete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
-  // },
-];
+  const services = [
+    // {
+    //   icon: <FileText className="w-12 h-12" />,
+    //   title: "Visa Form Assistance (Non-Legal)",
+    //   description:
+    //     "Expert support with visa application forms and documentation preparation. We guide you step-by-step to ensure accurate and complete submissions without providing legal advice.",
+    // },
+    {
+      icon: <GraduationCap className="w-12 h-12" />,
+      title: "College & University Application Support",
+      description:
+        "Personalized assistance for domestic and international college and university applications. From program selection to application preparation, we help you present a strong and compelling profile.",
+    },
+    {
+      icon: <Globe className="w-12 h-12" />,
+      title: "Credential & Document Evaluation Support",
+      description:
+        "Professional guidance with all major credential evaluation services. We help you prepare, organize, and submit the required documents for smooth and timely evaluations.",
+    },
+    {
+      icon: <UserCheck className="w-12 h-12" />,
+      title: "Licensing Board Application Support",
+      description:
+        "Comprehensive assistance for exam registrations and professional licensing board applications. We help you understand requirements, prepare documents, and complete every step correctly.",
+    },
+    {
+      icon: <Briefcase className="w-12 h-12" />,
+      title: "Job Application & Career Support",
+      description:
+        "Strategic support for job applications, résumé preparation, and career readiness. We help you confidently apply to positions that match your skills and goals.",
+    },
+    // {
+    //   icon: <Building2 className="w-12 h-12" />,
+    //   title: "Business License Application Support",
+    //   description:
+    //     "tComplete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
+    // },
+  ];
 
 
   const testimonials = [
@@ -83,19 +84,20 @@ const Home = () => {
       <AnimatedBackground />
       <SEO />
       <Navbar />
-      
+      <PromotionalPopup />
+
       {/* Hero Section with Background Image */}
       <section className="relative min-h-[700px] flex items-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <img 
-            src={heroBg} 
-            alt="Professional application services" 
+          <img
+            src={heroBg}
+            alt="Professional application services"
             className="w-full h-full object-cover"
           />
-         
+
         </div>
-        
+
         {/* Content */}
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
@@ -107,15 +109,15 @@ const Home = () => {
               <div className="inline-block mb-4 px-4 py-2 bg-secondary/20 backdrop-blur-sm rounded-full border border-secondary/30">
                 <span className="text-white font-semibold">Trusted by Thousands</span>
               </div>
-              
+
               <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white leading-tight">
                 We Make Applying Easy! 🎓💼
               </h1>
-              
+
               <p className="text-xl md:text-2xl mb-8 text-white/95 leading-relaxed">
                 Helping students and professionals simplify every application process with expert guidance and personalized support.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <Link to="/appointment">
                   <Button size="lg" className="text-lg px-8 py-6 shadow-elegant hover:shadow-hover transition-bounce group">
@@ -166,11 +168,11 @@ const Home = () => {
                 Your Trusted Application Partner
               </h2>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                OneStop Application Services LLC is dedicated to providing professional, 
+                OneStop Application Services LLC is dedicated to providing professional,
                 accessible, and accurate assistance for all your application needs.
               </p>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                We simplify complex processes so you can focus on achieving your goals, 
+                We simplify complex processes so you can focus on achieving your goals,
                 whether it's studying abroad, advancing your career, or starting a business.
               </p>
               <Link to="/about">

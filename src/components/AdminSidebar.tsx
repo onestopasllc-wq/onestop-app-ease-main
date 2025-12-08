@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Settings, Ban, LogOut, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Calendar, Settings, Ban, LogOut, ChevronLeft, Sparkles } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 const menuItems = [
   { title: "Dashboard", url: "#dashboard", icon: LayoutDashboard },
   { title: "Appointments", url: "#appointments", icon: Calendar },
+  { title: "Promotional Popups", url: "#popups", icon: Sparkles },
   { title: "Availability", url: "#availability", icon: Settings },
   { title: "Blocked Dates", url: "#blocked", icon: Ban },
 ];

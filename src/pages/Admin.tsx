@@ -13,14 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { 
-  Download, 
-  Loader2, 
-  Calendar, 
-  Filter, 
-  TrendingUp, 
-  DollarSign, 
-  Clock, 
+import {
+  Download,
+  Loader2,
+  Calendar,
+  Filter,
+  TrendingUp,
+  DollarSign,
+  Clock,
   Users,
   Plus,
   Settings,
@@ -47,6 +47,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Textarea } from "@/components/ui/textarea";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
+import { PromotionalPopupsAdmin } from "@/components/PromotionalPopupsAdmin";
 import { z } from "zod";
 
 // Input validation schemas
@@ -106,19 +107,19 @@ async function callAdminFn(payload: any) {
   const token = session?.access_token;
 
   if (!token) {
-    console.error("No auth token available");
+
     return { success: false, error: "Authentication required" };
   }
 
   const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/admin-appointments`, {
     method: "POST",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(payload)
   });
-  
+
   try {
     return await res.json();
   } catch {
@@ -158,11 +159,11 @@ const Admin = () => {
       const [hours, minutes] = timeString.split(':');
       const hour24 = parseInt(hours);
       const minute = parseInt(minutes);
-      
+
       // Convert to 12-hour format
       const period = hour24 >= 12 ? 'PM' : 'AM';
       const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-      
+
       return `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
     } catch (error) {
       // Fallback to original time if parsing fails
@@ -175,7 +176,7 @@ const Admin = () => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (!session?.user) {
           navigate("/auth");
         } else {
@@ -187,7 +188,7 @@ const Admin = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (!session?.user) {
         navigate("/auth");
       } else {
@@ -199,8 +200,8 @@ const Admin = () => {
   }, [navigate]);
 
   const checkAdminStatus = async (userId: string) => {
-    console.log("Checking admin status for user:", userId);
-    
+
+
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
@@ -208,10 +209,10 @@ const Admin = () => {
       .eq("role", "admin")
       .maybeSingle();
 
-    console.log("Admin check result:", { data, error });
+
 
     if (error || !data) {
-      console.error("Admin access denied:", error?.message || "No admin role found");
+
       setIsAdmin(false);
       setLoading(false);
       toast.error("Access denied. Admin role required.");
@@ -219,7 +220,7 @@ const Admin = () => {
       return;
     }
 
-    console.log("Admin access granted");
+
     setIsAdmin(true);
     setLoading(false);
     fetchAllData();
@@ -235,7 +236,7 @@ const Admin = () => {
   };
 
   const fetchStats = async () => {
-    console.log("Fetching stats...");
+
     const res = await callAdminFn({ action: "get" });
     if (!res.success) {
       toast.error("Failed to fetch stats: " + (res.error || "unknown"));
@@ -253,7 +254,7 @@ const Admin = () => {
   };
 
   const fetchAppointments = async () => {
-    console.log("Fetching appointments via admin function...");
+
     const res = await callAdminFn({ action: "get" });
     if (!res.success) {
       toast.error("Failed to fetch appointments: " + (res.error || "unknown"));
@@ -298,7 +299,7 @@ const Admin = () => {
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(apt => 
+      filtered = filtered.filter(apt =>
         apt.full_name.toLowerCase().includes(term) ||
         apt.email.toLowerCase().includes(term) ||
         (apt.phone && apt.phone.toLowerCase().includes(term)) ||
@@ -339,7 +340,7 @@ const Admin = () => {
     try {
       const res = await callAdminFn({ action: "delete", ids: targetIds });
       if (!res.success) {
-        console.error('Delete error', res.error);
+
         return { success: false, message: res.error || "Delete failed" };
       }
 
@@ -477,23 +478,23 @@ const Admin = () => {
     toast.success("CSV exported successfully");
   };
 
- const sendReminder = async (appointment: Appointment) => {
-  // Use the send-confirmation-email function but mark it as a reminder
-  const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
-    body: { 
-      appointmentId: appointment.id,
-      isReminder: true,  // This tells the function it's a reminder, not a new booking
-      callerEmail: user?.email  // Include admin email to prevent duplicate emails
+  const sendReminder = async (appointment: Appointment) => {
+    // Use the send-confirmation-email function but mark it as a reminder
+    const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
+      body: {
+        appointmentId: appointment.id,
+        isReminder: true,  // This tells the function it's a reminder, not a new booking
+        callerEmail: user?.email  // Include admin email to prevent duplicate emails
+      }
+    });
+
+    if (error) {
+      toast.error("Failed to send reminder: " + error.message);
+      return;
     }
-  });
 
-  if (error) {
-    toast.error("Failed to send reminder: " + error.message);
-    return;
-  }
-
-  toast.success("Reminder sent successfully to client");
-};
+    toast.success("Reminder sent successfully to client");
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -543,7 +544,7 @@ const Admin = () => {
 
   return (
     <>
-      <SEO 
+      <SEO
         title="Admin Dashboard - OneStop Application Services"
         description="Manage appointments and bookings"
       />
@@ -551,13 +552,13 @@ const Admin = () => {
       <SidebarProvider>
         <div className="min-h-screen flex w-full relative">
           <AdminSidebar />
-          
+
           <main className="flex-1 overflow-auto">
             {/* Header */}
             <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
               <div className="container flex h-16 items-center gap-4 px-4">
                 <SidebarTrigger className="hover:bg-accent hover-lift" />
-                <motion.div 
+                <motion.div
                   className="flex-1 overflow-hidden"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -601,7 +602,7 @@ const Admin = () => {
                   </Card>
                 </motion.div>
 
-                 <motion.div
+                <motion.div
                   whileHover={{ scale: 1.05, y: -5 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
@@ -693,25 +694,25 @@ const Admin = () => {
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={getWeeklyData()}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                        <XAxis 
-                          dataKey="day" 
+                        <XAxis
+                          dataKey="day"
                           stroke="hsl(var(--muted-foreground))"
                           fontSize={12}
                         />
-                        <YAxis 
+                        <YAxis
                           stroke="hsl(var(--muted-foreground))"
                           fontSize={12}
                         />
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px'
                           }}
                         />
-                        <Bar 
-                          dataKey="appointments" 
-                          fill="hsl(var(--primary))" 
+                        <Bar
+                          dataKey="appointments"
+                          fill="hsl(var(--primary))"
                           radius={[8, 8, 0, 0]}
                           maxBarSize={60}
                         />
@@ -743,12 +744,12 @@ const Admin = () => {
                         </CardTitle>
                         <CardDescription>View and manage all bookings</CardDescription>
                       </div>
-                      <motion.div 
+                      <motion.div
                         className="flex items-center gap-2"
                         whileHover={{ scale: 1.05 }}
                       >
-                        <Button 
-                          onClick={exportToCSV} 
+                        <Button
+                          onClick={exportToCSV}
                           variant="outline"
                           className="hover:bg-accent hover-lift shadow-md"
                         >
@@ -758,372 +759,417 @@ const Admin = () => {
                       </motion.div>
                     </div>
                   </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Enhanced Filters */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-2">
-                      <Label htmlFor="search">Search</Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="search"
-                          placeholder="Search by name, email, phone, location, state, city, or service..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
-                        />
-                        {searchTerm && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-1 top-1 h-7 w-7 p-0"
-                            onClick={() => setSearchTerm("")}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
+                  <CardContent className="space-y-4">
+                    {/* Enhanced Filters */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-2">
+                        <Label htmlFor="search">Search</Label>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="search"
+                            placeholder="Search by name, email, phone, location, state, city, or service..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                          />
+                          {searchTerm && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-1 top-1 h-7 w-7 p-0"
+                              onClick={() => setSearchTerm("")}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="service-filter">Service</Label>
+                        <Select value={filterService} onValueChange={setFilterService}>
+                          <SelectTrigger id="service-filter">
+                            <SelectValue placeholder="All Services" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Services</SelectItem>
+                            <SelectItem value="visa">Visa Form Preparation</SelectItem>
+                            <SelectItem value="college">College Application Support</SelectItem>
+                            <SelectItem value="document">Document Evaluation</SelectItem>
+                            <SelectItem value="licensing">Licensing Board Support</SelectItem>
+                            <SelectItem value="job">Job Application Support</SelectItem>
+                            <SelectItem value="business">Business License Support</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="date-filter">Date</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="date-filter"
+                            type="date"
+                            value={filterDate}
+                            onChange={(e) => setFilterDate(e.target.value)}
+                          />
+                          {(filterService !== "all" || filterDate || searchTerm) && (
+                            <Button variant="outline" onClick={clearFilters} className="px-3">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <Label htmlFor="service-filter">Service</Label>
-                      <Select value={filterService} onValueChange={setFilterService}>
-                        <SelectTrigger id="service-filter">
-                          <SelectValue placeholder="All Services" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Services</SelectItem>
-                          <SelectItem value="visa">Visa Form Preparation</SelectItem>
-                          <SelectItem value="college">College Application Support</SelectItem>
-                          <SelectItem value="document">Document Evaluation</SelectItem>
-                          <SelectItem value="licensing">Licensing Board Support</SelectItem>
-                          <SelectItem value="job">Job Application Support</SelectItem>
-                          <SelectItem value="business">Business License Support</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="date-filter">Date</Label>
+
+                    {/* Results Count */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Showing {filteredAppointments.length} of {appointments.length} appointments
+                      </div>
                       <div className="flex gap-2">
-                        <Input
-                          id="date-filter"
-                          type="date"
-                          value={filterDate}
-                          onChange={(e) => setFilterDate(e.target.value)}
-                        />
-                        {(filterService !== "all" || filterDate || searchTerm) && (
-                          <Button variant="outline" onClick={clearFilters} className="px-3">
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          Total: {appointments.length}
+                        </Badge>
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Today: {stats.today_count}
+                        </Badge>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Results Count */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      Showing {filteredAppointments.length} of {appointments.length} appointments
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        Total: {appointments.length}
-                      </Badge>
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Today: {stats.today_count}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Table */}
-                  <div className="rounded-lg border bg-card/50 backdrop-blur overflow-hidden shadow-lg">
-                    {/* Selection toolbar */}
-                    {selectedIds.size > 0 && (
-                      <div className="flex items-center justify-between p-3 border-b bg-background/60">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium">{selectedIds.size} selected</span>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="hover-lift">
-                            Deselect
-                          </Button>
-                        </div>
-                        <div>
-                          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                            <DialogTrigger asChild>
-                              <Button variant="destructive" className="shadow-md">
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Confirm deletion</DialogTitle>
-                                <DialogDescription>You're about to delete {selectedIds.size} appointment(s). This action cannot be undone.</DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-2 py-4 max-h-40 overflow-auto">
-                                {filteredAppointments.filter(a => selectedIds.has(a.id)).map(a => (
-                                  <div key={a.id} className="flex items-center justify-between p-2 rounded-md bg-muted/10">
-                                    <div>
-                                      <div className="font-medium">{a.full_name}</div>
-                                      <div className="text-sm text-muted-foreground">{a.appointment_date} {formatTime(a.appointment_time)}</div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              <DialogFooter>
-                                <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={async () => {
-                                    const result = await deleteSelected();
-                                    if (result.success) {
-                                      toast.success(result.message);
-                                      setShowDeleteDialog(false);
-                                    } else {
-                                      toast.error(result.message);
-                                    }
-                                  }}
-                                  disabled={deleting}
-                                >
-                                  {deleting ? 'Deleting...' : `Delete ${selectedIds.size}`}
+                    {/* Table */}
+                    <div className="rounded-lg border bg-card/50 backdrop-blur overflow-hidden shadow-lg">
+                      {/* Selection toolbar */}
+                      {selectedIds.size > 0 && (
+                        <div className="flex items-center justify-between p-3 border-b bg-background/60">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="hover-lift">
+                              Deselect
+                            </Button>
+                          </div>
+                          <div>
+                            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                              <DialogTrigger asChild>
+                                <Button variant="destructive" className="shadow-md">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    )}
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">
-                              <div className="flex items-center justify-center">
-                                <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} />
-                              </div>
-                            </TableHead>
-                            <TableHead>Client</TableHead>
-                            <TableHead>Services</TableHead>
-                            <TableHead>Date & Time</TableHead>
-                            <TableHead>Contact Info</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Payment</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredAppointments.map((apt) => (
-                            <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors group">
-                              <TableCell className="w-12">
-                                <div className="flex items-center justify-center">
-                                  <Checkbox checked={selectedIds.has(apt.id)} onCheckedChange={() => toggleSelect(apt.id)} />
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                                    <User className="h-4 w-4 text-primary" />
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">{apt.full_name}</div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <MailIcon className="h-3 w-3" />
-                                      {apt.email}
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Confirm deletion</DialogTitle>
+                                  <DialogDescription>You're about to delete {selectedIds.size} appointment(s). This action cannot be undone.</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-2 py-4 max-h-40 overflow-auto">
+                                  {filteredAppointments.filter(a => selectedIds.has(a.id)).map(a => (
+                                    <div key={a.id} className="flex items-center justify-between p-2 rounded-md bg-muted/10">
+                                      <div>
+                                        <div className="font-medium">{a.full_name}</div>
+                                        <div className="text-sm text-muted-foreground">{a.appointment_date} {formatTime(a.appointment_time)}</div>
+                                      </div>
                                     </div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                  {apt.services.map((service, i) => (
-                                    <Badge key={i} variant="secondary" className="text-xs">
-                                      {service}
-                                    </Badge>
                                   ))}
                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                  <div>
-                                    <div className="font-medium">{apt.appointment_date}</div>
-                                    <div className="text-sm text-muted-foreground flex items-center gap-1">
-                                      <ClockIcon className="h-3 w-3" />
-                                      {formatTime(apt.appointment_time)}
+                                <DialogFooter>
+                                  <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={async () => {
+                                      const result = await deleteSelected();
+                                      if (result.success) {
+                                        toast.success(result.message);
+                                        setShowDeleteDialog(false);
+                                      } else {
+                                        toast.error(result.message);
+                                      }
+                                    }}
+                                    disabled={deleting}
+                                  >
+                                    {deleting ? 'Deleting...' : `Delete ${selectedIds.size}`}
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </div>
+                      )}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-12">
+                                <div className="flex items-center justify-center">
+                                  <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} />
+                                </div>
+                              </TableHead>
+                              <TableHead>Client</TableHead>
+                              <TableHead>Services</TableHead>
+                              <TableHead>Date & Time</TableHead>
+                              <TableHead>Contact Info</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Payment</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredAppointments.map((apt) => (
+                              <TableRow key={apt.id} className="hover:bg-accent/50 transition-colors group">
+                                <TableCell className="w-12">
+                                  <div className="flex items-center justify-center">
+                                    <Checkbox checked={selectedIds.has(apt.id)} onCheckedChange={() => toggleSelect(apt.id)} />
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                      <User className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{apt.full_name}</div>
+                                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <MailIcon className="h-3 w-3" />
+                                        {apt.email}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <Phone className="h-3 w-3" />
-                                    {apt.phone || "Not provided"}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                    {apt.services.map((service, i) => (
+                                      <Badge key={i} variant="secondary" className="text-xs">
+                                        {service}
+                                      </Badge>
+                                    ))}
                                   </div>
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <MessageSquare className="h-3 w-3" />
-                                    {apt.contact_method}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                      <div className="font-medium">{apt.appointment_date}</div>
+                                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                        <ClockIcon className="h-3 w-3" />
+                                        {formatTime(apt.appointment_time)}
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    📍 {apt.city || "N/A"}, {apt.state || "N/A"}, {apt.location}
-                                  </div>
-                                  {apt.how_heard && (
+                                </TableCell>
+                                <TableCell>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <Phone className="h-3 w-3" />
+                                      {apt.phone || "Not provided"}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <MessageSquare className="h-3 w-3" />
+                                      {apt.contact_method}
+                                    </div>
                                     <div className="text-xs text-muted-foreground">
-                                      Heard from: {apt.how_heard}
+                                      📍 {apt.city || "N/A"}, {apt.state || "N/A"}, {apt.location}
                                     </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    apt.status === "completed" ? "default" :
-                                    apt.status === "confirmed" ? "secondary" :
-                                    apt.status === "cancelled" ? "destructive" :
-                                    "outline"
-                                  }
-                                >
-                                  {apt.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={apt.payment_status === "paid" ? "default" : "outline"}
-                                >
-                                  {apt.payment_status || "pending"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-2 justify-end">
-                                  {/* View Details Button */}
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm"
-                                          onClick={() => setViewingAppointment(apt)}
-                                          className="hover:bg-blue-50 hover:text-blue-600 hover-lift shadow-sm"
-                                        >
-                                          <Eye className="h-4 w-4" />
-                                        </Button>
-                                      </motion.div>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                      <DialogHeader>
-                                        <DialogTitle>Appointment Details</DialogTitle>
-                                      </DialogHeader>
-                                      {viewingAppointment && (
-                                        <div className="space-y-6 py-4">
-                                          {/* Personal Information */}
-                                          <div>
-                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                              <User className="h-4 w-4" />
-                                              Personal Information
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Full Name</Label>
-                                                <p className="font-medium">{viewingAppointment.full_name}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Email</Label>
-                                                <p className="font-medium">{viewingAppointment.email}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Phone</Label>
-                                                <p className="font-medium">{viewingAppointment.phone || "Not provided"}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Contact Method</Label>
-                                                <p className="font-medium">{viewingAppointment.contact_method}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Country</Label>
-                                                <p className="font-medium">{viewingAppointment.location}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">State/Province</Label>
-                                                <p className="font-medium">{viewingAppointment.state || "Not provided"}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">City</Label>
-                                                <p className="font-medium">{viewingAppointment.city || "Not provided"}</p>
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          {/* Services */}
-                                          <div>
-                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                              <FileText className="h-4 w-4" />
-                                              Services Requested
-                                            </h3>
-                                            <div className="flex flex-wrap gap-2 p-4 bg-muted/20 rounded-lg">
-                                              {viewingAppointment.services.map((service, index) => (
-                                                <Badge key={index} variant="secondary" className="text-sm">
-                                                  {service}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          </div>
-
-                                          {/* Appointment Details */}
-                                          <div>
-                                            <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                              <Calendar className="h-4 w-4" />
-                                              Appointment Details
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Date</Label>
-                                                <p className="font-medium">{viewingAppointment.appointment_date}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">Time</Label>
-                                                <p className="font-medium">{formatTime(viewingAppointment.appointment_time)}</p>
-                                              </div>
-                                              <div>
-                                                <Label className="text-sm text-muted-foreground">How They Heard About Us</Label>
-                                                <p className="font-medium">{viewingAppointment.how_heard || "Not specified"}</p>
-                                              </div>
-                                              {viewingAppointment.file_url && (
-                                                <div>
-                                                  <Label className="text-sm text-muted-foreground">Uploaded File</Label>
-                                                  <a 
-                                                    href={viewingAppointment.file_url} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="font-medium text-blue-600 hover:underline flex items-center gap-1"
-                                                  >
-                                                    <File className="h-4 w-4" />
-                                                    View Document
-                                                  </a>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-
-                                          {/* Additional Details */}
-                                          {viewingAppointment.description && (
+                                    {apt.how_heard && (
+                                      <div className="text-xs text-muted-foreground">
+                                        Heard from: {apt.how_heard}
+                                      </div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      apt.status === "completed" ? "default" :
+                                        apt.status === "confirmed" ? "secondary" :
+                                          apt.status === "cancelled" ? "destructive" :
+                                            "outline"
+                                    }
+                                  >
+                                    {apt.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={apt.payment_status === "paid" ? "default" : "outline"}
+                                  >
+                                    {apt.payment_status || "pending"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2 justify-end">
+                                    {/* View Details Button */}
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setViewingAppointment(apt)}
+                                            className="hover:bg-blue-50 hover:text-blue-600 hover-lift shadow-sm"
+                                          >
+                                            <Eye className="h-4 w-4" />
+                                          </Button>
+                                        </motion.div>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                        <DialogHeader>
+                                          <DialogTitle>Appointment Details</DialogTitle>
+                                        </DialogHeader>
+                                        {viewingAppointment && (
+                                          <div className="space-y-6 py-4">
+                                            {/* Personal Information */}
                                             <div>
                                               <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                                <MessageSquare className="h-4 w-4" />
-                                                Additional Details
+                                                <User className="h-4 w-4" />
+                                                Personal Information
                                               </h3>
-                                              <div className="p-4 bg-muted/20 rounded-lg">
-                                                <p className="text-sm whitespace-pre-wrap">{viewingAppointment.description}</p>
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Full Name</Label>
+                                                  <p className="font-medium">{viewingAppointment.full_name}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Email</Label>
+                                                  <p className="font-medium">{viewingAppointment.email}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Phone</Label>
+                                                  <p className="font-medium">{viewingAppointment.phone || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Contact Method</Label>
+                                                  <p className="font-medium">{viewingAppointment.contact_method}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Country</Label>
+                                                  <p className="font-medium">{viewingAppointment.location}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">State/Province</Label>
+                                                  <p className="font-medium">{viewingAppointment.state || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">City</Label>
+                                                  <p className="font-medium">{viewingAppointment.city || "Not provided"}</p>
+                                                </div>
                                               </div>
                                             </div>
-                                          )}
 
-                                          {/* Status Update */}
-                                          <div>
-                                            <h3 className="font-semibold mb-3">Update Status</h3>
+                                            {/* Services */}
+                                            <div>
+                                              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                                <FileText className="h-4 w-4" />
+                                                Services Requested
+                                              </h3>
+                                              <div className="flex flex-wrap gap-2 p-4 bg-muted/20 rounded-lg">
+                                                {viewingAppointment.services.map((service, index) => (
+                                                  <Badge key={index} variant="secondary" className="text-sm">
+                                                    {service}
+                                                  </Badge>
+                                                ))}
+                                              </div>
+                                            </div>
+
+                                            {/* Appointment Details */}
+                                            <div>
+                                              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                                <Calendar className="h-4 w-4" />
+                                                Appointment Details
+                                              </h3>
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Date</Label>
+                                                  <p className="font-medium">{viewingAppointment.appointment_date}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">Time</Label>
+                                                  <p className="font-medium">{formatTime(viewingAppointment.appointment_time)}</p>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-sm text-muted-foreground">How They Heard About Us</Label>
+                                                  <p className="font-medium">{viewingAppointment.how_heard || "Not specified"}</p>
+                                                </div>
+                                                {viewingAppointment.file_url && (
+                                                  <div>
+                                                    <Label className="text-sm text-muted-foreground">Uploaded File</Label>
+                                                    <a
+                                                      href={viewingAppointment.file_url}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="font-medium text-blue-600 hover:underline flex items-center gap-1"
+                                                    >
+                                                      <File className="h-4 w-4" />
+                                                      View Document
+                                                    </a>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+
+                                            {/* Additional Details */}
+                                            {viewingAppointment.description && (
+                                              <div>
+                                                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                                  <MessageSquare className="h-4 w-4" />
+                                                  Additional Details
+                                                </h3>
+                                                <div className="p-4 bg-muted/20 rounded-lg">
+                                                  <p className="text-sm whitespace-pre-wrap">{viewingAppointment.description}</p>
+                                                </div>
+                                              </div>
+                                            )}
+
+                                            {/* Status Update */}
+                                            <div>
+                                              <h3 className="font-semibold mb-3">Update Status</h3>
+                                              <Select
+                                                defaultValue={viewingAppointment.status}
+                                                onValueChange={(value) => handleStatusUpdate(viewingAppointment.id, value)}
+                                              >
+                                                <SelectTrigger>
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="pending">Pending</SelectItem>
+                                                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                                                  <SelectItem value="completed">Completed</SelectItem>
+                                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </DialogContent>
+                                    </Dialog>
+
+                                    {/* Edit Button */}
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setEditingAppointment(apt)}
+                                            className="hover-lift shadow-sm"
+                                          >
+                                            Edit
+                                          </Button>
+                                        </motion.div>
+                                      </DialogTrigger>
+                                      <DialogContent>
+                                        <DialogHeader>
+                                          <DialogTitle>Update Appointment</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-4 py-4">
+                                          <div className="space-y-2">
+                                            <Label>Customer: {apt.full_name}</Label>
+                                            <Label>Date: {apt.appointment_date} at {formatTime(apt.appointment_time)}</Label>
+                                          </div>
+                                          <div className="space-y-2">
+                                            <Label htmlFor="status">Status</Label>
                                             <Select
-                                              defaultValue={viewingAppointment.status}
-                                              onValueChange={(value) => handleStatusUpdate(viewingAppointment.id, value)}
+                                              defaultValue={apt.status}
+                                              onValueChange={(value) => handleStatusUpdate(apt.id, value)}
                                             >
-                                              <SelectTrigger>
+                                              <SelectTrigger id="status">
                                                 <SelectValue />
                                               </SelectTrigger>
                                               <SelectContent>
@@ -1135,104 +1181,74 @@ const Admin = () => {
                                             </Select>
                                           </div>
                                         </div>
-                                      )}
-                                    </DialogContent>
-                                  </Dialog>
+                                      </DialogContent>
+                                    </Dialog>
 
-                                  {/* Edit Button */}
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm" 
-                                          onClick={() => setEditingAppointment(apt)}
-                                          className="hover-lift shadow-sm"
-                                        >
-                                          Edit
-                                        </Button>
-                                      </motion.div>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                      <DialogHeader>
-                                        <DialogTitle>Update Appointment</DialogTitle>
-                                      </DialogHeader>
-                                      <div className="space-y-4 py-4">
-                                        <div className="space-y-2">
-                                          <Label>Customer: {apt.full_name}</Label>
-                                          <Label>Date: {apt.appointment_date} at {formatTime(apt.appointment_time)}</Label>
-                                        </div>
-                                        <div className="space-y-2">
-                                          <Label htmlFor="status">Status</Label>
-                                          <Select
-                                            defaultValue={apt.status}
-                                            onValueChange={(value) => handleStatusUpdate(apt.id, value)}
-                                          >
-                                            <SelectTrigger id="status">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="pending">Pending</SelectItem>
-                                              <SelectItem value="confirmed">Confirmed</SelectItem>
-                                              <SelectItem value="completed">Completed</SelectItem>
-                                              <SelectItem value="cancelled">Cancelled</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                  
-                                  {/* Send Reminder Button */}
-                                  <motion.div whileHover={{ scale: 1.1, rotate: 10 }} whileTap={{ scale: 0.9 }}>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => sendReminder(apt)}
-                                      className="hover:bg-green-50 hover:text-green-600 hover-lift shadow-sm"
-                                    >
-                                      <Mail className="h-4 w-4" />
-                                    </Button>
-                                  </motion.div>
-                                  
-                                  {/* Delete Button */}
-                                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedIds(new Set([apt.id]));
-                                        setShowDeleteDialog(true);
-                                      }}
-                                      className="text-destructive hover:bg-destructive/10 hover-lift"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </motion.div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    {filteredAppointments.length === 0 && (
-                      <div className="text-center py-12">
-                        <div className="text-muted-foreground mb-4">
-                          <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <h3 className="text-lg font-medium">No appointments found</h3>
-                          <p className="mt-2">Try adjusting your search or filters</p>
-                        </div>
-                        {(filterService !== "all" || filterDate || searchTerm) && (
-                          <Button variant="outline" onClick={clearFilters}>
-                            Clear filters
-                          </Button>
-                        )}
+                                    {/* Send Reminder Button */}
+                                    <motion.div whileHover={{ scale: 1.1, rotate: 10 }} whileTap={{ scale: 0.9 }}>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => sendReminder(apt)}
+                                        className="hover:bg-green-50 hover:text-green-600 hover-lift shadow-sm"
+                                      >
+                                        <Mail className="h-4 w-4" />
+                                      </Button>
+                                    </motion.div>
+
+                                    {/* Delete Button */}
+                                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedIds(new Set([apt.id]));
+                                          setShowDeleteDialog(true);
+                                        }}
+                                        className="text-destructive hover:bg-destructive/10 hover-lift"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </motion.div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      {filteredAppointments.length === 0 && (
+                        <div className="text-center py-12">
+                          <div className="text-muted-foreground mb-4">
+                            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <h3 className="text-lg font-medium">No appointments found</h3>
+                            <p className="mt-2">Try adjusting your search or filters</p>
+                          </div>
+                          {(filterService !== "all" || filterDate || searchTerm) && (
+                            <Button variant="outline" onClick={clearFilters}>
+                              Clear filters
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Promotional Popups Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
+                id="popups"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3 pointer-events-none" />
+                  <CardContent className="relative z-10 pt-6">
+                    <PromotionalPopupsAdmin />
+                  </CardContent>
+                </Card>
               </motion.div>
 
               {/* Availability Section */}
@@ -1255,63 +1271,63 @@ const Admin = () => {
                     </CardTitle>
                     <CardDescription>Set your available days and hours for appointments</CardDescription>
                   </CardHeader>
-                <CardContent className="space-y-4">
-                  {dayNames.map((day, index) => {
-                    const workingHour = workingHours.find(wh => wh.day_of_week === index);
-                    return (
-                      <motion.div 
-                        key={index} 
-                        className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-lg border bg-card/50 backdrop-blur hover:bg-card/70 transition-all hover-lift"
-                        whileHover={{ scale: 1.01 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
-                        <div className="w-32 font-medium">{day}</div>
-                        {workingHour ? (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="time"
-                                value={workingHour.start_time.substring(0, 5)}
-                                onChange={(e) => handleUpdateWorkingHours(workingHour.id, 'start_time', e.target.value)}
-                                className="w-32"
-                              />
-                              <span>to</span>
-                              <Input
-                                type="time"
-                                value={workingHour.end_time.substring(0, 5)}
-                                onChange={(e) => handleUpdateWorkingHours(workingHour.id, 'end_time', e.target.value)}
-                                className="w-32"
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Label>Slot Duration:</Label>
-                              <Input
-                                type="number"
-                                value={workingHour.slot_duration}
-                                onChange={(e) => handleUpdateWorkingHours(workingHour.id, 'slot_duration', parseInt(e.target.value))}
-                                className="w-20"
-                                min="15"
-                                step="15"
-                              />
-                              <span>min</span>
-                            </div>
-                            <Button
-                              variant={workingHour.is_active ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => handleUpdateWorkingHours(workingHour.id, 'is_active', !workingHour.is_active)}
-                              className="ml-auto"
-                            >
-                              {workingHour.is_active ? "Active" : "Inactive"}
-                            </Button>
-                          </>
-                        ) : (
-                          <Badge variant="outline">Not configured</Badge>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+                  <CardContent className="space-y-4">
+                    {dayNames.map((day, index) => {
+                      const workingHour = workingHours.find(wh => wh.day_of_week === index);
+                      return (
+                        <motion.div
+                          key={index}
+                          className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-lg border bg-card/50 backdrop-blur hover:bg-card/70 transition-all hover-lift"
+                          whileHover={{ scale: 1.01 }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                        >
+                          <div className="w-32 font-medium">{day}</div>
+                          {workingHour ? (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="time"
+                                  value={workingHour.start_time.substring(0, 5)}
+                                  onChange={(e) => handleUpdateWorkingHours(workingHour.id, 'start_time', e.target.value)}
+                                  className="w-32"
+                                />
+                                <span>to</span>
+                                <Input
+                                  type="time"
+                                  value={workingHour.end_time.substring(0, 5)}
+                                  onChange={(e) => handleUpdateWorkingHours(workingHour.id, 'end_time', e.target.value)}
+                                  className="w-32"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Label>Slot Duration:</Label>
+                                <Input
+                                  type="number"
+                                  value={workingHour.slot_duration}
+                                  onChange={(e) => handleUpdateWorkingHours(workingHour.id, 'slot_duration', parseInt(e.target.value))}
+                                  className="w-20"
+                                  min="15"
+                                  step="15"
+                                />
+                                <span>min</span>
+                              </div>
+                              <Button
+                                variant={workingHour.is_active ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => handleUpdateWorkingHours(workingHour.id, 'is_active', !workingHour.is_active)}
+                                className="ml-auto"
+                              >
+                                {workingHour.is_active ? "Active" : "Inactive"}
+                              </Button>
+                            </>
+                          ) : (
+                            <Badge variant="outline">Not configured</Badge>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
               </motion.div>
 
               {/* Blocked Dates Section */}
@@ -1334,78 +1350,78 @@ const Admin = () => {
                     </CardTitle>
                     <CardDescription>Block specific dates for holidays or breaks</CardDescription>
                   </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1">
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={newBlockedDate}
-                        onChange={(e) => setNewBlockedDate(e.target.value)}
-                      />
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <Label>Date</Label>
+                        <Input
+                          type="date"
+                          value={newBlockedDate}
+                          onChange={(e) => setNewBlockedDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Label>Reason (optional)</Label>
+                        <Input
+                          placeholder="e.g., Holiday, Personal break"
+                          value={newBlockedReason}
+                          onChange={(e) => setNewBlockedReason(e.target.value)}
+                        />
+                      </div>
+                      <motion.div
+                        className="flex items-end"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button onClick={handleAddBlockedDate} className="hover-lift shadow-md">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add
+                        </Button>
+                      </motion.div>
                     </div>
-                    <div className="flex-1">
-                      <Label>Reason (optional)</Label>
-                      <Input
-                        placeholder="e.g., Holiday, Personal break"
-                        value={newBlockedReason}
-                        onChange={(e) => setNewBlockedReason(e.target.value)}
-                      />
-                    </div>
-                    <motion.div 
-                      className="flex items-end"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button onClick={handleAddBlockedDate} className="hover-lift shadow-md">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add
-                      </Button>
-                    </motion.div>
-                  </div>
-                </CardContent>
+                  </CardContent>
 
-                {/* Blocked Dates List */}
-                <CardHeader className="border-t relative z-10">
-                  <CardTitle className="text-foreground">Current Blocked Dates</CardTitle>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <div className="space-y-2">
-                    {blockedDates.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">No blocked dates configured</p>
-                    ) : (
-                      blockedDates.map((blocked) => (
-                        <motion.div 
-                          key={blocked.id} 
-                          className="flex items-center justify-between p-4 rounded-lg border bg-card/50 backdrop-blur hover:bg-card/70 transition-all hover-lift"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          whileHover={{ scale: 1.01 }}
-                          transition={{ type: "spring", stiffness: 300 }}
-                        >
-                          <div>
-                            <div className="font-medium">{blocked.blocked_date}</div>
-                            {blocked.reason && <div className="text-sm text-muted-foreground">{blocked.reason}</div>}
-                          </div>
+                  {/* Blocked Dates List */}
+                  <CardHeader className="border-t relative z-10">
+                    <CardTitle className="text-foreground">Current Blocked Dates</CardTitle>
+                  </CardHeader>
+                  <CardContent className="relative z-10">
+                    <div className="space-y-2">
+                      {blockedDates.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">No blocked dates configured</p>
+                      ) : (
+                        blockedDates.map((blocked) => (
                           <motion.div
-                            whileHover={{ scale: 1.1, rotate: 10 }}
-                            whileTap={{ scale: 0.9 }}
+                            key={blocked.id}
+                            className="flex items-center justify-between p-4 rounded-lg border bg-card/50 backdrop-blur hover:bg-card/70 transition-all hover-lift"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            whileHover={{ scale: 1.01 }}
+                            transition={{ type: "spring", stiffness: 300 }}
                           >
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteBlockedDate(blocked.id)}
-                              className="shadow-md"
+                            <div>
+                              <div className="font-medium">{blocked.blocked_date}</div>
+                              {blocked.reason && <div className="text-sm text-muted-foreground">{blocked.reason}</div>}
+                            </div>
+                            <motion.div
+                              whileHover={{ scale: 1.1, rotate: 10 }}
+                              whileTap={{ scale: 0.9 }}
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteBlockedDate(blocked.id)}
+                                className="shadow-md"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </motion.div>
                           </motion.div>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             </div>
           </main>

@@ -144,6 +144,39 @@ export type Database = {
         }
         Relationships: []
       }
+      promotional_popups: {
+        Row: {
+          id: string
+          type: string
+          image_url: string
+          title: string | null
+          is_active: boolean | null
+          display_order: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          type: string
+          image_url: string
+          title?: string | null
+          is_active?: boolean | null
+          display_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          type?: string
+          image_url?: string
+          title?: string | null
+          is_active?: boolean | null
+          display_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       appointment_stats: {
