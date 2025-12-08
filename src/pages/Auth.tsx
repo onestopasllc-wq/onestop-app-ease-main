@@ -27,9 +27,9 @@ const Auth = () => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          navigate("/");
+          navigate("/admin");
         }
       }
     );
@@ -38,9 +38,9 @@ const Auth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
-        navigate("/");
+        navigate("/admin");
       }
     });
 
@@ -72,7 +72,7 @@ const Auth = () => {
 
   return (
     <>
-      <SEO 
+      <SEO
         title="Login - OneStop Application Services"
         description="Sign in to your OneStop Application Services account"
       />
@@ -119,7 +119,7 @@ const Auth = () => {
                   </Button>
                 </form>
               </CardContent>
-          </Card>
+            </Card>
           </motion.div>
         </main>
         <Footer />

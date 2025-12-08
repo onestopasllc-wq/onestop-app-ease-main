@@ -9,6 +9,17 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Upload, Trash2, Image as ImageIcon, Loader2, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PromotionalPopup {
     id: string;
@@ -186,10 +197,6 @@ export const PromotionalPopupsAdmin = () => {
     };
 
     const handleDelete = async (id: string, imageUrl: string) => {
-        if (!confirm("Are you sure you want to delete this promotional popup?")) {
-            return;
-        }
-
         try {
             // Delete from database
             const { error: deleteError } = await supabase
@@ -198,7 +205,6 @@ export const PromotionalPopupsAdmin = () => {
                 .eq("id", id);
 
             if (deleteError) {
-
                 toast.error("Failed to delete popup");
                 return;
             }
@@ -212,7 +218,6 @@ export const PromotionalPopupsAdmin = () => {
             toast.success("Popup deleted successfully");
             await fetchPopups();
         } catch (err) {
-
             toast.error("An error occurred during deletion");
         }
     };
@@ -292,13 +297,30 @@ export const PromotionalPopupsAdmin = () => {
                                             />
                                             <Label className="text-sm">Show on website</Label>
                                         </div>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => handleDelete(eventPopup.id, eventPopup.image_url)}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="sm">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Event Popup?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the event popup and its image. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleDelete(eventPopup.id, eventPopup.image_url)}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    >
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </>
                             ) : (
@@ -393,13 +415,30 @@ export const PromotionalPopupsAdmin = () => {
                                             />
                                             <Label className="text-sm">Show on website</Label>
                                         </div>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => handleDelete(adPopup.id, adPopup.image_url)}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="sm">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Advertisement Popup?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the advertisement popup and its image. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleDelete(adPopup.id, adPopup.image_url)}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    >
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </>
                             ) : (
