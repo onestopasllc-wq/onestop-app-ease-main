@@ -227,11 +227,16 @@ async function handleCheckoutSessionCompleted(session: any) {
     console.log('👤 Customer:', appointment.full_name);
     console.log('📅 Date/Time:', appointment.appointment_date, appointment.appointment_time);
 
-    // 5. Send notifications (optional - requires Edge Functions or external service)
-    // Note: You may need to call Supabase Edge Functions or use a service like SendGrid
-    console.log('📧 Notifications should be sent here (email/WhatsApp)');
-    // Example: Call Supabase Edge Function
-    // await supabaseAdmin.functions.invoke('send-confirmation-email', { body: {...} });
+    // 5. Send notifications (don't fail the webhook if these fail)
+    console.log('📧 Sending confirmation notifications...');
+
+    sendPaymentConfirmationEmail(appointment)
+      .then(() => console.log('✅ Email notification sent'))
+      .catch((err: any) => console.error('❌ Email notification failed (non-critical):', err));
+
+    sendPaymentWhatsAppNotification(appointment)
+      .then(() => console.log('✅ WhatsApp notification sent'))
+      .catch((err: any) => console.error('❌ WhatsApp notification failed (non-critical):', err));
 
     return appointment;
   } catch (error: any) {
@@ -272,4 +277,48 @@ async function handleCheckoutSessionExpired(session: any) {
 
   // Optional: Log to analytics table
   // This helps track how many people abandon payment
+}
+
+async function sendPaymentConfirmationEmail(appointment: any) {
+  if (!supabaseAdmin) return;
+  try {
+    const { error } = await supabaseAdmin.functions.invoke('send-confirmation-email', {
+      body: {
+        to: appointment.email,
+        name: appointment.full_name,
+        appointmentDate: appointment.appointment_date,
+        appointmentTime: appointment.appointment_time,
+        services: appointment.services,
+        paymentStatus: 'paid'
+      }
+    });
+
+    if (error) throw error;
+    console.log('Payment confirmation email sent');
+  } catch (error) {
+    console.error('Failed to send email:', error);
+  }
+}
+
+async function sendPaymentWhatsAppNotification(appointment: any) {
+  if (!supabaseAdmin) return;
+  try {
+    const { error } = await supabaseAdmin.functions.invoke('send-whatsapp-notification', {
+      body: {
+        customerName: appointment.full_name,
+        email: appointment.email,
+        phone: appointment.phone || 'Not provided',
+        services: appointment.services,
+        date: appointment.appointment_date,
+        time: appointment.appointment_time,
+        description: appointment.description,
+        paymentStatus: 'paid'
+      }
+    });
+
+    if (error) throw error;
+    console.log('WhatsApp notification sent');
+  } catch (error) {
+    console.error('Failed to send WhatsApp:', error);
+  }
 }
