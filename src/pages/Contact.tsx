@@ -29,7 +29,7 @@ const Contact = () => {
 
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      
+
       const { error } = await supabase.functions.invoke("send-contact-email", {
         body: { name, email, message },
       });
@@ -40,7 +40,7 @@ const Contact = () => {
         title: "Message Sent!",
         description: "Thank you for contacting us. We'll get back to you soon.",
       });
-      
+
       (e.target as HTMLFormElement).reset();
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -57,7 +57,7 @@ const Contact = () => {
   return (
     <div className="min-h-screen flex flex-col relative">
       <AnimatedBackground />
-      <SEO 
+      <SEO
         title="Contact Us - Get In Touch Today"
         description="Contact OneStop Application Services LLC. Call +1 (571) 660-4984, email us, or message on Telegram. We're here to help with your application needs."
       />
@@ -173,7 +173,7 @@ const Contact = () => {
                 <Card className="shadow-card hover:shadow-hover transition-smooth border-0 gradient-card group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
-                      <motion.div 
+                      <motion.div
                         className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0"
                         animate={{ y: [0, -5, 0] }}
                         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -199,7 +199,7 @@ const Contact = () => {
                 <Card className="shadow-card hover:shadow-hover transition-smooth border-0 gradient-card group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
-                      <motion.div 
+                      <motion.div
                         className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0"
                         animate={{ y: [0, -5, 0] }}
                         transition={{ duration: 3, delay: 0.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -225,7 +225,7 @@ const Contact = () => {
                 <Card className="shadow-card hover:shadow-hover transition-smooth border-0 gradient-card group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
-                      <motion.div 
+                      <motion.div
                         className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0"
                         animate={{ y: [0, -5, 0] }}
                         transition={{ duration: 3, delay: 1, repeat: Infinity, ease: 'easeInOut' }}
@@ -253,7 +253,7 @@ const Contact = () => {
                 <Card className="shadow-card hover:shadow-hover transition-smooth border-0 gradient-card group">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
-                      <motion.div 
+                      <motion.div
                         className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0"
                         animate={{ y: [0, -5, 0] }}
                         transition={{ duration: 3, delay: 1.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -318,14 +318,14 @@ const Contact = () => {
             <p className="text-muted-foreground mb-8 text-base sm:text-lg">
               Follow us on social media for updates, tips, and success stories
             </p>
-            
+
             <div className="flex justify-center items-center gap-4 sm:gap-6 flex-wrap">
               <motion.div
                 className="group relative"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <SocialIcon 
+                <SocialIcon
                   url="https://t.me/OneStop_Application_Services_LLC"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                   style={{ height: 64, width: 64 }}
@@ -340,7 +340,7 @@ const Contact = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <SocialIcon 
+                <SocialIcon
                   url="https://wa.me/15716604984"
                   network="whatsapp"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
@@ -356,8 +356,8 @@ const Contact = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <SocialIcon 
-                  url="https://facebook.com/onestopapplicationservices"
+                <SocialIcon
+                  url="https://www.facebook.com/share/17A6QTUppF/?mibextid=wwXIfr"
                   network="facebook"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                   style={{ height: 64, width: 64 }}
@@ -372,8 +372,8 @@ const Contact = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <SocialIcon 
-                  url="https://instagram.com/onestopapplicationservices"
+                <SocialIcon
+                  url="https://www.instagram.com/onestop_application_services?igsh=dXZrZXlkYjV1YXRh&utm_source=qr"
                   network="instagram"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                   style={{ height: 64, width: 64 }}
@@ -388,8 +388,8 @@ const Contact = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <SocialIcon 
-                  url="https://youtube.com/@onestopapplicationservices"
+                <SocialIcon
+                  url="https://youtube.com/@onestopapplicationservicesllc?si=1cH9ZQ0IiDgvdYsl"
                   network="youtube"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                   style={{ height: 64, width: 64 }}
@@ -404,8 +404,8 @@ const Contact = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <SocialIcon 
-                  url="https://tiktok.com/@onestopapplicationservices"
+                <SocialIcon
+                  url="https://www.tiktok.com/@onestop.applicati?_t=ZP-90fcXx8MTGQ&_r=1"
                   network="tiktok"
                   className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                   style={{ height: 64, width: 64 }}

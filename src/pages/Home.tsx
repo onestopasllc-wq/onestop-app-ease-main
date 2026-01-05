@@ -9,6 +9,16 @@ import SEO from "@/components/SEO";
 import heroBg from "@/assets/hero-image.png";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import PromotionalPopup from "@/components/PromotionalPopup";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+
+interface Testimonial {
+  name: string;
+  location: string | null;
+  text: string;
+  rating: number;
+}
 
 const Home = () => {
   const services = [
@@ -51,26 +61,31 @@ const Home = () => {
   ];
 
 
-  const testimonials = [
-    {
-      name: "Mihret Walelgne",
-      location: "Newark, DE, USA",
-      text: "OneStop Application Services LLC supported me through the CGFNS process. They were so helpful, patient, and professional!",
-      rating: 5,
-    },
-    // {
-    //   name: "Sarah Johnson",
-    //   location: "Washington, DC",
-    //   text: "Amazing service! They helped me navigate the complex visa application process with ease and professionalism.",
-    //   rating: 5,
-    // },
-    // {
-    //   name: "David Chen",
-    //   location: "Arlington, VA",
-    //   text: "Professional, efficient, and supportive. Highly recommend for anyone needing application assistance!",
-    //   rating: 5,
-    // },
-  ];
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("testimonials")
+          .select("name, location, text, rating")
+          .eq("is_active", true)
+          .order("display_order", { ascending: true })
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+        setTestimonials(data || []);
+      } catch (error) {
+        console.error("Error fetching testimonials:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
 
   const features = [
     "Professional & Experienced Team",
@@ -302,38 +317,50 @@ const Home = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <Card className="h-full shadow-card hover:shadow-hover transition-smooth border-0">
-                  <CardContent className="pt-8">
-                    <div className="flex gap-1 mb-4">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <svg
-                          key={i}
-                          className="w-5 h-5 fill-secondary"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <p className="text-muted-foreground mb-6 italic leading-relaxed text-lg">
-                      "{testimonial.text}"
-                    </p>
-                    <div className="border-t pt-4">
-                      <div className="font-bold text-primary text-lg">{testimonial.name}</div>
-                      <div className="text-sm text-muted-foreground">{testimonial.location}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            {loading ? (
+              <div className="col-span-full flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : testimonials.length > 0 ? (
+              testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <Card className="h-full shadow-card hover:shadow-hover transition-smooth border-0">
+                    <CardContent className="pt-8">
+                      <div className="flex gap-1 mb-4">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className="w-5 h-5 fill-secondary"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-muted-foreground mb-6 italic leading-relaxed text-lg">
+                        "{testimonial.text}"
+                      </p>
+                      <div className="border-t pt-4">
+                        <div className="font-bold text-primary text-lg">{testimonial.name}</div>
+                        {testimonial.location && (
+                          <div className="text-sm text-muted-foreground">{testimonial.location}</div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                Check out our success stories to see how we help our clients.
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-12">

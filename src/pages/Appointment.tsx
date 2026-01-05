@@ -838,7 +838,7 @@ export default function Appointment() {
                   whileTap={{ scale: 0.95 }}
                 >
                   <SocialIcon
-                    url="https://facebook.com/onestopapplicationservices"
+                    url="https://www.facebook.com/share/17A6QTUppF/?mibextid=wwXIfr"
                     network="facebook"
                     className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                     style={{ height: 64, width: 64 }}
@@ -854,7 +854,7 @@ export default function Appointment() {
                   whileTap={{ scale: 0.95 }}
                 >
                   <SocialIcon
-                    url="https://www.instagram.com/onestop_application_services?igsh=dXZrZXlkYjV1YXRh&utm_source=qr "
+                    url="https://www.instagram.com/onestop_application_services?igsh=dXZrZXlkYjV1YXRh&utm_source=qr"
                     network="instagram"
                     className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                     style={{ height: 64, width: 64 }}
@@ -870,7 +870,7 @@ export default function Appointment() {
                   whileTap={{ scale: 0.95 }}
                 >
                   <SocialIcon
-                    url="https://youtube.com/@onestopapplicationservices"
+                    url="https://youtube.com/@onestopapplicationservicesllc?si=1cH9ZQ0IiDgvdYsl"
                     network="youtube"
                     className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                     style={{ height: 64, width: 64 }}
@@ -886,7 +886,7 @@ export default function Appointment() {
                   whileTap={{ scale: 0.95 }}
                 >
                   <SocialIcon
-                    url="https://tiktok.com/@onestopapplicationservices"
+                    url="https://www.tiktok.com/@onestop.applicati?_t=ZP-90fcXx8MTGQ&_r=1"
                     network="tiktok"
                     className="shadow-lg group-hover:shadow-xl transition-all duration-300"
                     style={{ height: 64, width: 64 }}
