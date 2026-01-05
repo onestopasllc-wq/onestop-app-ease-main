@@ -180,6 +180,45 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          id: string
+          name: string
+          location: string | null
+          service: string | null
+          text: string
+          rating: number | null
+          is_active: boolean | null
+          display_order: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          location?: string | null
+          service?: string | null
+          text: string
+          rating?: number | null
+          is_active?: boolean | null
+          display_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          location?: string | null
+          service?: string | null
+          text?: string
+          rating?: number | null
+          is_active?: boolean | null
+          display_order?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       appointment_stats: {

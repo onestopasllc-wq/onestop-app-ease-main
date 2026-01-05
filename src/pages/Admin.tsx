@@ -48,6 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { PromotionalPopupsAdmin } from "@/components/PromotionalPopupsAdmin";
+import { TestimonialAdmin } from "@/components/TestimonialAdmin";
 import { z } from "zod";
 
 // Input validation schemas
@@ -1247,6 +1248,28 @@ const Admin = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3 pointer-events-none" />
                   <CardContent className="relative z-10 pt-6">
                     <PromotionalPopupsAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Testimonials Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.28 }}
+                id="testimonials"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/3 via-transparent to-primary/3 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-secondary" />
+                      Client Testimonials
+                    </CardTitle>
+                    <CardDescription>View and manage client success stories</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TestimonialAdmin />
                   </CardContent>
                 </Card>
               </motion.div>
