@@ -317,7 +317,7 @@ export default function Appointment() {
     <>
       <SEO
         title="Book Appointment - Get Expert Application Support"
-        description="Book your consultation with OneStop Application Services LLC. Secure your spot with a $25 deposit and get expert guidance for your application process."
+        description="Book your consultation with OneStop Application Services LLC. Secure your spot with a $75 deposit and get expert guidance for your application process."
       />
       <Navbar />
       <div className="min-h-screen relative overflow-hidden pt-20 pb-16">
@@ -340,7 +340,7 @@ export default function Appointment() {
                 Book Your Appointment
               </h1>
               <p className="text-muted-foreground text-base max-w-xl mx-auto">
-                Fill out the form below and secure your spot with a $25 deposit
+                Fill out the form below and secure your spot with a $75 deposit
               </p>
             </motion.div>
 
@@ -772,7 +772,7 @@ export default function Appointment() {
                         ) : (
                           <>
                             <CheckCircle2 className="mr-2 h-5 w-5" />
-                            Complete Booking - $25 Deposit
+                            Complete Booking - $75 Deposit
                           </>
                         )}
                       </Button>
