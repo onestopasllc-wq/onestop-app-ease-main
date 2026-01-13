@@ -578,7 +578,7 @@ export default function Appointment() {
                           <Info className="h-4 w-4 text-blue-600" />
                           <AlertDescription className="text-sm text-blue-800">
                             <strong>Important:</strong> All appointment times are scheduled in{" "}
-                            <span className="font-semibold">USA Eastern Time (ET)</span>. Please ensure you
+                            <span className="font-semibold">USA Eastern Standard Time (EST)</span>. Please ensure you
                             convert to your local time zone when booking.
                           </AlertDescription>
                         </Alert>
