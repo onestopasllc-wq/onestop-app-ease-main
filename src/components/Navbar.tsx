@@ -26,12 +26,10 @@ const Navbar = () => {
   ];
 
   const moreLinks = [
-    { to: "/partners", label: "Partners" },
     { to: "/dealerships", label: "Auto Dealers" },
     { to: "/insurance", label: "Insurance" },
     { to: "/health-insurance", label: "Health Insurance" },
     { to: "/rentals", label: "Rentals" },
-    { to: "/blog", label: "Blog" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
