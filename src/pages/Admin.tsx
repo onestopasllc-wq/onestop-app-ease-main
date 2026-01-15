@@ -37,7 +37,11 @@ import {
   Clock as ClockIcon,
   File,
   Search,
-  X
+  X,
+  Car,
+  ShieldCheck,
+  HeartPulse,
+  Home
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -49,6 +53,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { PromotionalPopupsAdmin } from "@/components/PromotionalPopupsAdmin";
 import { TestimonialAdmin } from "@/components/TestimonialAdmin";
+import { DealershipAdmin } from "@/components/DealershipAdmin";
+import { InsuranceAdmin } from "@/components/InsuranceAdmin";
+import { HealthInsuranceAdmin } from "@/components/HealthInsuranceAdmin";
+import { RentalAdmin } from "@/components/RentalAdmin";
 import { z } from "zod";
 
 // Input validation schemas
@@ -1274,6 +1282,93 @@ const Admin = () => {
                 </Card>
               </motion.div>
 
+              {/* Dealerships Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.29 }}
+                id="dealerships"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <Car className="h-5 w-5 text-primary" />
+                      Dealership Partners
+                    </CardTitle>
+                    <CardDescription>Manage car dealership partnerships</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <DealershipAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Insurance Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                id="insurance"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/3 via-transparent to-primary/3 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-secondary" />
+                      Insurance Partners
+                    </CardTitle>
+                    <CardDescription>Manage car insurance partnerships</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <InsuranceAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Health Insurance Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                id="health-insurance"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <HeartPulse className="h-5 w-5 text-teal-500" />
+                      Health Insurance Partners
+                    </CardTitle>
+                    <CardDescription>Manage health insurance partnerships</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <HealthInsuranceAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Rentals Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                id="rentals"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <Home className="h-5 w-5 text-indigo-500" />
+                      Rental Listings
+                    </CardTitle>
+                    <CardDescription>Review and manage rental ads</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <RentalAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
               {/* Availability Section */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
