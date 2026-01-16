@@ -127,6 +127,12 @@ async function handleCheckoutSessionCompleted(session: any) {
   console.log('💰 Processing completed checkout session:', session.id);
 
   try {
+    // 0. Check for Rental Listing Type
+    if (session.metadata?.type === 'rental_listing') {
+      await handleRentalListing(session);
+      return;
+    }
+
     // 1. Check if appointment already exists for this session (idempotency)
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
@@ -258,6 +264,113 @@ async function handleCheckoutSessionCompleted(session: any) {
       .catch((logErr: any) => console.error('Failed to log error:', logErr));
 
     throw error;
+  }
+}
+
+async function handleRentalListing(session: any) {
+  if (!supabaseAdmin) {
+    console.error('❌ Supabase client not initialized');
+    return;
+  }
+
+  console.log('🏠 Processing Rental Listing Payment:', session.id);
+
+  try {
+    // 1. Reassemble listing data from chunks
+    const metadata = session.metadata || {};
+    let listingDataStr = '';
+
+    // Sort keys and combine chunks
+    const chunkKeys = Object.keys(metadata)
+      .filter(key => key.startsWith('data_chunk_'))
+      .sort((a, b) => {
+        const numA = parseInt(a.split('_')[2]);
+        const numB = parseInt(b.split('_')[2]);
+        return numA - numB;
+      });
+
+    console.log(`Found ${chunkKeys.length} data chunks in metadata`);
+
+    for (const key of chunkKeys) {
+      listingDataStr += metadata[key];
+    }
+
+    if (!listingDataStr) {
+      throw new Error("No listing data found in metadata chunks");
+    }
+
+    const listingData = JSON.parse(listingDataStr);
+    console.log('Successfully reassembled listing data for:', listingData.title);
+
+    // 2. Insert into database
+    console.log(`Creating new listing for user ${listingData.user_id}...`);
+
+    const { data: newListing, error: insertError } = await supabaseAdmin
+      .from('rental_listings')
+      .insert({
+        user_id: listingData.user_id,
+        title: listingData.title,
+        description: listingData.description,
+        address: listingData.address,
+        property_type: listingData.property_type,
+        price: listingData.price,
+        features: listingData.features || [],
+        contact_name: listingData.contact_name,
+        contact_phone: listingData.contact_phone,
+        contact_email: listingData.contact_email,
+        images: listingData.images || [],
+        status: 'pending_approval',
+        payment_status: 'paid',
+        stripe_payment_id: session.payment_intent || session.subscription,
+        stripe_session_id: session.id
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('❌ Failed to insert listing:', insertError);
+      throw insertError;
+    }
+
+    console.log(`✅ Rental listing created successfully with ID: ${newListing.id}`);
+
+    // Send admin notification
+    await sendRentalAdminNotification(newListing, session);
+
+  } catch (error: any) {
+    console.error('❌ Error handling rental listing:', error);
+    // Log error
+    await supabaseAdmin
+      .from('webhook_errors')
+      .insert({
+        event_id: session.id,
+        event_type: 'rental.payment_failed',
+        error_message: error.message,
+        metadata: session.metadata,
+      })
+      .catch((logErr: any) => console.error('Failed to log error:', logErr));
+    throw error;
+  }
+}
+
+async function sendRentalAdminNotification(listingData: any, session: any) {
+  if (!supabaseAdmin) return;
+  try {
+    const { error } = await supabaseAdmin.functions.invoke('send-confirmation-email', {
+      body: {
+        type: 'rental_subscription',
+        to: listingData.contact_email || session.customer_email || 'unknown@example.com',
+        name: listingData.contact_name || session.customer_details?.name || 'Valued Customer',
+        listingTitle: listingData.title,
+        price: listingData.price,
+        listingId: listingData.id,
+      }
+    });
+
+    if (error) throw error;
+    console.log('Rental admin notification email sent');
+  } catch (error) {
+    console.error('Failed to send rental admin notification:', error);
   }
 }
 
