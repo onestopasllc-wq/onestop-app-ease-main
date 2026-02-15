@@ -46,14 +46,25 @@ const Rentals = () => {
 
     const fetchRentals = async () => {
         try {
-            const { data, error } = await (supabase
-                .from("rental_listings" as any)
-                .select("*")
-                .eq("status", "approved")
-                .order("created_at", { ascending: false })) as any;
+            const [userRentalsRes, adminRentalsRes] = await Promise.all([
+                supabase
+                    .from("rental_listings" as any)
+                    .select("*")
+                    .eq("status", "approved"),
+                supabase
+                    .from("admin_rentals" as any)
+                    .select("*")
+            ]);
 
-            if (error) throw error;
-            setRentals(data || []);
+            if (userRentalsRes.error) throw userRentalsRes.error;
+            if (adminRentalsRes.error) throw adminRentalsRes.error;
+
+            const allRentals = [
+                ...(userRentalsRes.data || []),
+                ...(adminRentalsRes.data || [])
+            ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            setRentals(allRentals);
         } catch (err) {
             console.error("Failed to fetch rentals:", err);
         } finally {
@@ -176,12 +187,12 @@ const Rentals = () => {
                                         {rental.features && rental.features.length > 0 && (
                                             <div className="flex flex-wrap gap-1.5">
                                                 {rental.features.slice(0, 4).map((feature, i) => (
-                                                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/10 text-secondary-foreground">
+                                                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold border border-primary/30">
                                                         {feature}
                                                     </span>
                                                 ))}
                                                 {rental.features.length > 4 && (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold border border-amber-200">
                                                         +{rental.features.length - 4} more
                                                     </span>
                                                 )}

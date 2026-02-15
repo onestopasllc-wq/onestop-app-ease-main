@@ -328,28 +328,6 @@ async function sendPaymentWhatsAppNotification(appointment: any, supabaseAdmin: 
   }
 }
 
-async function sendRentalAdminNotification(listingData: any, session: any, supabaseAdmin: any) {
-  try {
-    const { error } = await supabaseAdmin.functions.invoke('send-confirmation-email', {
-      body: {
-        type: 'rental_subscription',
-        to: listingData.contact_email || session.customer_email || 'unknown@example.com',
-        name: listingData.contact_name || session.customer_details?.name || 'Valued Customer',
-        listingTitle: listingData.title,
-        price: listingData.price,
-        listingId: listingData.id,
-        // We can pass empty values for appointment fields to satisfy types if strictly checked, 
-        // but our updated function handles their absence for this type.
-      }
-    });
-
-    if (error) throw error;
-    console.log('Rental admin notification email sent');
-  } catch (error) {
-    console.error('Failed to send rental admin notification:', error);
-  }
-}
-
 async function handleRentalListing(session: any, supabaseAdmin: any) {
   console.log('🏠 Processing Rental Listing Payment:', session.id);
 
@@ -412,20 +390,8 @@ async function handleRentalListing(session: any, supabaseAdmin: any) {
 
     console.log(`✅ Rental listing created successfully with ID: ${newListing.id}`);
 
-    // Send admin notification
-    await sendRentalAdminNotification(newListing, session, supabaseAdmin);
-
   } catch (error: any) {
     console.error('❌ Error handling rental listing:', error);
-    // Log error
-    await supabaseAdmin
-      .from('webhook_errors')
-      .insert({
-        event_id: session.id,
-        event_type: 'rental.payment_failed',
-        error_message: error.message,
-        metadata: session.metadata,
-      });
     throw error;
   }
 }

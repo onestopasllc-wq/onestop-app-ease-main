@@ -57,6 +57,7 @@ import { DealershipAdmin } from "@/components/DealershipAdmin";
 import { InsuranceAdmin } from "@/components/InsuranceAdmin";
 import { HealthInsuranceAdmin } from "@/components/HealthInsuranceAdmin";
 import { RentalAdmin } from "@/components/RentalAdmin";
+import { AdminRentalsCRUD } from "@/components/AdminRentalsCRUD";
 import { z } from "zod";
 
 // Input validation schemas
@@ -1364,8 +1365,11 @@ const Admin = () => {
                     </CardTitle>
                     <CardDescription>Review and manage rental ads</CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-8">
                     <RentalAdmin />
+                    <div className="pt-8 border-t">
+                      <AdminRentalsCRUD />
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

@@ -4,23 +4,24 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS, GET"
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+console.log("Stripe Checkout function initialized");
+
 serve(async (req) => {
-  // Handle CORS preflight requests - THIS MUST BE FIRST
+  // Handle CORS
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: corsHeaders
-    });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    console.log("=== CREATE-CHECKOUT FUNCTION STARTED ===");
-    console.log("Request method:", req.method);
-
     const requestBody = await req.text();
-    console.log("Raw request body:", requestBody);
+    console.log("Request body received:", requestBody);
+
+    if (!requestBody) {
+      throw new Error("Empty request body");
+    }
 
     let bookingData;
     try {
@@ -136,18 +137,17 @@ serve(async (req) => {
       },
       status: 200
     });
-  } catch (error) {
-    console.error("❌ Error in create-checkout:", error);
-    console.error("Error stack:", error.stack);
+
+  } catch (error: any) {
+    console.error("Error creating checkout session:", error.message);
     return new Response(JSON.stringify({
-      error: error.message,
-      type: error.type || "UnknownError"
+      error: error.message
     }), {
       status: 500,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json"
-      }
+      },
     });
   }
 });
