@@ -86,11 +86,11 @@ class AboutPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'About OneStop',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 40,
+              fontSize: MediaQuery.of(context).size.width < 380 ? 32 : 40,
               fontWeight: FontWeight.w900,
               letterSpacing: -1,
             ),
@@ -122,7 +122,7 @@ class AboutPage extends StatelessWidget {
             'Empowering Success Through Simplified Applications',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  fontSize: 28,
+                  fontSize: MediaQuery.of(context).size.width < 380 ? 24 : 28,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.primaryBlue,
                 ),
@@ -179,10 +179,10 @@ class AboutPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'Dagim Mulatu',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: MediaQuery.of(context).size.width < 380 ? 28 : 32,
               fontWeight: FontWeight.w900,
               color: AppTheme.primaryBlue,
               letterSpacing: -0.5,

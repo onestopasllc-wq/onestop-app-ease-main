@@ -82,14 +82,14 @@ class _InsurancePageState extends State<InsurancePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+        color: AppTheme.primaryBlue.withOpacity(0.05),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.secondaryTeal.withValues(alpha: 0.1),
+              color: AppTheme.secondaryTeal.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text('Insurance Solutions',
@@ -99,11 +99,11 @@ class _InsurancePageState extends State<InsurancePage> {
                     fontSize: 12)),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Get Protected Today',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 28,
+                fontSize: MediaQuery.of(context).size.width < 380 ? 24 : 28,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryBlue),
           ),
@@ -161,10 +161,10 @@ class _InsurancePageState extends State<InsurancePage> {
                           errorBuilder: (context, error, stackTrace) => Icon(
                               Icons.shield,
                               size: 80,
-                              color: Colors.white.withValues(alpha: 0.2)),
+                              color: Colors.white.withOpacity(0.2)),
                         )
                       : Icon(Icons.shield,
-                          size: 80, color: Colors.white.withValues(alpha: 0.2)),
+                          size: 80, color: Colors.white.withOpacity(0.2)),
                 ),
               ),
               Padding(
@@ -176,7 +176,9 @@ class _InsurancePageState extends State<InsurancePage> {
                         style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue)),
+                            color: AppTheme.primaryBlue),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 8),
                     Text(partner.description,
                         style: const TextStyle(color: AppTheme.textMuted)),

@@ -57,12 +57,14 @@ class _TestimonialsPageState extends State<TestimonialsPage> {
         gradient: LinearGradient(
             colors: [AppTheme.primaryBlue, AppTheme.secondaryTeal]),
       ),
-      child: const Column(
+      child: Column(
         children: [
           Text(
             'Success Stories',
             style: TextStyle(
-                color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: MediaQuery.of(context).size.width < 380 ? 28 : 32,
+                fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 16),
           Text(
@@ -185,27 +187,32 @@ class _TestimonialsPageState extends State<TestimonialsPage> {
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryBlue)),
           const SizedBox(height: 32),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 1.5,
-            children: stats
-                .map((s) => Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(s['number']!,
-                            style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.secondaryTeal)),
-                        Text(s['label']!,
-                            style: const TextStyle(
-                                color: AppTheme.textMuted,
-                                fontWeight: FontWeight.w500)),
-                      ],
-                    ))
-                .toList(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isSmall = constraints.maxWidth < 350;
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: isSmall ? 1 : 2,
+                childAspectRatio: isSmall ? 3.0 : 1.5,
+                children: stats
+                    .map((s) => Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(s['number']!,
+                                style: TextStyle(
+                                    fontSize: isSmall ? 28 : 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.secondaryTeal)),
+                            Text(s['label']!,
+                                style: const TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontWeight: FontWeight.w500)),
+                          ],
+                        ))
+                    .toList(),
+              );
+            },
           ),
         ],
       ),

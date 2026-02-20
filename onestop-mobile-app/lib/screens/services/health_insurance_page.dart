@@ -103,7 +103,7 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
             'Health Insurance Solutions',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 28,
+                fontSize: MediaQuery.of(context).size.width < 380 ? 24 : 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.teal[800]),
           ),
@@ -161,10 +161,10 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
                           errorBuilder: (context, error, stackTrace) => Icon(
                               Icons.health_and_safety,
                               size: 80,
-                              color: Colors.white.withValues(alpha: 0.2)),
+                              color: Colors.white.withOpacity(0.2)),
                         )
                       : Icon(Icons.health_and_safety,
-                          size: 80, color: Colors.white.withValues(alpha: 0.2)),
+                          size: 80, color: Colors.white.withOpacity(0.2)),
                 ),
               ),
               Padding(
@@ -176,7 +176,9 @@ class _HealthInsurancePageState extends State<HealthInsurancePage> {
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.teal[800])),
+                            color: Colors.teal[800]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 8),
                     Text(partner.description,
                         style: const TextStyle(color: AppTheme.textMuted)),

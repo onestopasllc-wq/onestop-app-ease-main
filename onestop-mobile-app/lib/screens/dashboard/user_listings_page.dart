@@ -14,7 +14,7 @@ class UserListingsPage extends StatefulWidget {
 class _UserListingsPageState extends State<UserListingsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final supabase = Supabase.instance.client;
+  SupabaseClient? _supabase;
   bool _loading = true;
   List<dynamic> _allListings = [];
 
@@ -22,14 +22,21 @@ class _UserListingsPageState extends State<UserListingsPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _fetchListings();
+    try {
+      _supabase = Supabase.instance.client;
+      _fetchListings();
+    } catch (e) {
+      debugPrint('Supabase not initialized in UserListingsPage: $e');
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _fetchListings() async {
+    if (_supabase == null) return;
     try {
-      final user = supabase.auth.currentUser;
+      final user = _supabase!.auth.currentUser;
       if (user != null) {
-        final response = await supabase
+        final response = await _supabase!
             .from('rental_listings')
             .select('*')
             .eq('user_id', user.id)
@@ -173,8 +180,10 @@ class _UserListingsPageState extends State<UserListingsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
                       children: [
                         _buildStatusBadge(status),
                         Text(formattedDate,
@@ -245,7 +254,7 @@ class _UserListingsPageState extends State<UserListingsPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

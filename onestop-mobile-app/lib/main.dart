@@ -22,6 +22,7 @@ import 'package:onestop_mobile_app/screens/dashboard/user_listings_page.dart';
 import 'package:onestop_mobile_app/screens/dashboard/profile_settings_page.dart';
 import 'package:onestop_mobile_app/screens/dashboard/new_rental_page.dart';
 import 'package:onestop_mobile_app/screens/splash_screen.dart';
+import 'package:onestop_mobile_app/screens/community_services_page.dart';
 import 'package:flutter/foundation.dart';
 
 void main() async {
@@ -56,6 +57,7 @@ class OneStopApp extends StatelessWidget {
         '/splash': (context) => const SplashScreen(),
         '/': (context) => const HomePage(),
         '/services': (context) => const ServicesPage(),
+        '/community-services': (context) => const CommunityServicesPage(),
         '/rentals': (context) => const RentalsPage(),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),

@@ -176,13 +176,14 @@ class _LegalJobsPageState extends State<LegalJobsPage> {
               const SizedBox(height: 20),
               RichText(
                 textAlign: TextAlign.center,
-                text: const TextSpan(
+                text: TextSpan(
                   style: TextStyle(
-                      fontSize: 32,
+                      fontSize:
+                          MediaQuery.of(context).size.width < 380 ? 26 : 32,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryBlue,
                       height: 1.1),
-                  children: [
+                  children: const [
                     TextSpan(text: 'Find Your Next '),
                     TextSpan(
                         text: 'Legal Job',
@@ -241,11 +242,16 @@ class _LegalJobsPageState extends State<LegalJobsPage> {
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(
+                        horizontal:
+                            MediaQuery.of(context).size.width < 380 ? 12 : 20,
+                      ),
                       elevation: 0,
                     ),
-                    child: const Text('Search',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(
+                      MediaQuery.of(context).size.width < 350 ? 'Go' : 'Search',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
                 border: InputBorder.none,

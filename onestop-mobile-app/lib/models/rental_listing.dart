@@ -10,6 +10,9 @@ class RentalListing {
   final String contactPhone;
   final String contactEmail;
   final List<String> images;
+  final bool isActive;
+  final bool isFeatured;
+  final int? displayOrder;
   final DateTime createdAt;
 
   RentalListing({
@@ -24,6 +27,9 @@ class RentalListing {
     required this.contactPhone,
     required this.contactEmail,
     required this.images,
+    this.isActive = true,
+    this.isFeatured = false,
+    this.displayOrder,
     required this.createdAt,
   });
 
@@ -40,6 +46,9 @@ class RentalListing {
       contactPhone: json['contact_phone'] as String,
       contactEmail: json['contact_email'] as String,
       images: List<String>.from(json['images'] ?? []),
+      isActive: json['is_active'] as bool? ?? true,
+      isFeatured: json['is_featured'] as bool? ?? false,
+      displayOrder: json['display_order'] as int?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

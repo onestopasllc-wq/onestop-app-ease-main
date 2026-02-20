@@ -23,7 +23,9 @@ class _HomePageState extends State<HomePage>
   int _dealershipCount = 0;
   int _rentalCount = 0;
   int _insuranceCount = 0;
+  int _communityCount = 0;
   double _scrollOffset = 0.0;
+  bool _isTestimonialExpanded = false;
 
   @override
   void initState() {
@@ -57,6 +59,7 @@ class _HomePageState extends State<HomePage>
     final dealerships = await SupabaseService.fetchDealerships();
     final rentals = await SupabaseService.fetchRentalListings();
     final insurance = await SupabaseService.fetchInsuranceProviders();
+    final community = await SupabaseService.fetchCommunityServices();
 
     if (mounted) {
       setState(() {
@@ -64,6 +67,7 @@ class _HomePageState extends State<HomePage>
         _dealershipCount = dealerships.length;
         _rentalCount = rentals.length;
         _insuranceCount = insurance.length;
+        _communityCount = community.length;
         _loadingTestimonials = false;
       });
     }
@@ -171,17 +175,17 @@ class _HomePageState extends State<HomePage>
                   child: Text(
                     'We Make Applying Easy! 🎓',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: Colors.white,
-                          fontSize: 42,
-                          height: 1.1,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withOpacity(0.5),
-                              offset: const Offset(0, 4),
-                              blurRadius: 10,
-                            ),
-                          ],
+                      color: Colors.white,
+                      fontSize: 42,
+                      height: 1.1,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.5),
+                          offset: const Offset(0, 4),
+                          blurRadius: 10,
                         ),
+                      ],
+                    ),
                   ),
                 )
               else
@@ -189,7 +193,8 @@ class _HomePageState extends State<HomePage>
                   'We Make Applying Easy! 🎓',
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         color: Colors.white,
-                        fontSize: 42,
+                        fontSize:
+                            MediaQuery.of(context).size.width < 400 ? 32 : 42,
                         height: 1.1,
                       ),
                 ),
@@ -311,6 +316,8 @@ class _HomePageState extends State<HomePage>
                       'Dealers', Icons.directions_car_rounded),
                   _buildStatCard(context, _rentalCount.toString(), 'Rentals',
                       Icons.home_work_rounded),
+                  _buildStatCard(context, _communityCount.toString(),
+                      'Community', Icons.people_rounded),
                 ],
               );
             },
@@ -427,14 +434,36 @@ class _HomePageState extends State<HomePage>
       ),
       child: Column(
         children: [
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
-              fontStyle: FontStyle.italic,
-              height: 1.6,
-              color: AppTheme.textDark,
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: Column(
+              children: [
+                Text(
+                  (!_isTestimonialExpanded && text.length > 150)
+                      ? '${text.substring(0, 150)}...'
+                      : text,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontStyle: FontStyle.italic,
+                    height: 1.6,
+                    color: AppTheme.textDark,
+                  ),
+                ),
+                if (text.length > 150)
+                  TextButton(
+                    onPressed: () => setState(
+                        () => _isTestimonialExpanded = !_isTestimonialExpanded),
+                    child: Text(
+                      _isTestimonialExpanded ? 'Read Less' : 'Read More',
+                      style: const TextStyle(
+                        color: AppTheme.secondaryTeal,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 32),
@@ -446,15 +475,19 @@ class _HomePageState extends State<HomePage>
                 child: Icon(Icons.person, color: Colors.white),
               ),
               const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(author,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18)),
-                  Text(location,
-                      style: const TextStyle(color: AppTheme.textMuted)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(author,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18),
+                        overflow: TextOverflow.ellipsis),
+                    Text(location,
+                        style: const TextStyle(color: AppTheme.textMuted),
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
               ),
             ],
           ),
@@ -465,10 +498,12 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildServicesOverview(BuildContext context) {
     final services = [
+      {'icon': FontAwesomeIcons.fileLines, 'title': 'Visa Help'},
       {'icon': FontAwesomeIcons.graduationCap, 'title': 'College Support'},
       {'icon': FontAwesomeIcons.globe, 'title': 'Documents'},
       {'icon': FontAwesomeIcons.userCheck, 'title': 'Licensing'},
       {'icon': FontAwesomeIcons.briefcase, 'title': 'Career'},
+      {'icon': FontAwesomeIcons.building, 'title': 'Business'},
     ];
 
     return Container(
@@ -493,21 +528,25 @@ class _HomePageState extends State<HomePage>
                 color: AppTheme.primaryBlue),
           ),
           const SizedBox(height: 48),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1,
-            ),
-            itemCount: services.length,
-            itemBuilder: (context, index) {
-              return _buildServiceSmallCard(
-                services[index]['icon'] as IconData,
-                services[index]['title'] as String,
-                context,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: constraints.maxWidth < 350 ? 2 : 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: constraints.maxWidth < 350 ? 0.8 : 0.9,
+                ),
+                itemCount: services.length,
+                itemBuilder: (context, index) {
+                  return _buildServiceSmallCard(
+                    services[index]['icon'] as IconData,
+                    services[index]['title'] as String,
+                    context,
+                  );
+                },
               );
             },
           ),
@@ -519,7 +558,13 @@ class _HomePageState extends State<HomePage>
   Widget _buildServiceSmallCard(
       IconData icon, String title, BuildContext context) {
     return InkWell(
-      onTap: () => Navigator.pushNamed(context, '/services'),
+      onTap: () {
+        if (title == 'Community') {
+          Navigator.pushNamed(context, '/community-services');
+        } else {
+          Navigator.pushNamed(context, '/services');
+        }
+      },
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -555,16 +600,17 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildCTA(BuildContext context) {
+    final isSmall = MediaQuery.of(context).size.width < 400;
     return Container(
-      margin: const EdgeInsets.all(24),
-      padding: const EdgeInsets.all(48),
+      margin: EdgeInsets.all(isSmall ? 16 : 24),
+      padding: EdgeInsets.all(isSmall ? 24 : 48),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppTheme.primaryBlue, Color(0xFF003060)],
         ),
-        borderRadius: BorderRadius.circular(40),
+        borderRadius: BorderRadius.circular(isSmall ? 24 : 40),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryBlue.withOpacity(0.3),
@@ -575,17 +621,21 @@ class _HomePageState extends State<HomePage>
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Ready to Excel?',
+            textAlign: TextAlign.center,
             style: TextStyle(
-                color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: isSmall ? 28 : 36,
+                fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Text(
             'Let our 20+ years of expertise guide your journey today.',
             textAlign: TextAlign.center,
-            style:
-                TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 18),
+            style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: isSmall ? 16 : 18),
           ),
           const SizedBox(height: 40),
           ElevatedButton(
@@ -593,11 +643,13 @@ class _HomePageState extends State<HomePage>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: AppTheme.primaryBlue,
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+              padding: EdgeInsets.symmetric(
+                  horizontal: isSmall ? 32 : 48, vertical: isSmall ? 16 : 24),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+                  borderRadius: BorderRadius.circular(isSmall ? 12 : 20)),
             ),
-            child: const Text('Start Now', style: TextStyle(fontSize: 18)),
+            child: Text('Start Now',
+                style: TextStyle(fontSize: isSmall ? 16 : 18)),
           ),
         ],
       ),

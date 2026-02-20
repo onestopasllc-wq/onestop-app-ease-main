@@ -96,7 +96,7 @@ class _ServicesPageState extends State<ServicesPage> {
                                           color: AppTheme.secondaryTeal,
                                           size: 16),
                                       const SizedBox(width: 8),
-                                      Text(feature),
+                                      Expanded(child: Text(feature)),
                                     ],
                                   ),
                                 )),

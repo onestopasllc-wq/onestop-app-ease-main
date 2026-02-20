@@ -5,6 +5,7 @@ import 'package:onestop_mobile_app/models/insurance_provider.dart';
 import 'package:onestop_mobile_app/models/rental_listing.dart';
 import 'package:onestop_mobile_app/models/testimonial.dart';
 import 'package:onestop_mobile_app/models/service.dart';
+import 'package:onestop_mobile_app/models/community_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SupabaseService {
@@ -93,18 +94,59 @@ class SupabaseService {
   static Future<List<RentalListing>> fetchRentalListings() async {
     try {
       debugPrint('SupabaseService: Fetching rental listings...');
-      final response = await client
-          .from('rental_listings')
-          .select()
-          // .eq('status', 'approved')
-          .order('created_at', ascending: false);
 
-      debugPrint('SupabaseService: Raw response for rentals: $response');
-      final list = response as List;
-      debugPrint('SupabaseService: Fetched ${list.length} rental listings');
-      return list.map((m) => RentalListing.fromJson(m)).toList();
+      // Fetch from both tables to match website logic
+      final responses = await Future.wait([
+        client
+            .from('rental_listings')
+            .select()
+            .eq('status', 'approved')
+            .order('created_at', ascending: false),
+        client
+            .from('admin_rentals')
+            .select()
+            .order('created_at', ascending: false),
+      ]);
+
+      final userRentals = responses[0] as List;
+      final adminRentals = responses[1] as List;
+
+      final combined = [...userRentals, ...adminRentals];
+
+      // Sort by created_at descending
+      combined.sort((a, b) {
+        final aTime = DateTime.parse(a['created_at'] as String);
+        final bTime = DateTime.parse(b['created_at'] as String);
+        return bTime.compareTo(aTime);
+      });
+
+      debugPrint(
+          'SupabaseService: Fetched ${combined.length} total rental listings');
+      return combined.map((m) => RentalListing.fromJson(m)).toList();
     } catch (e) {
       debugPrint('SupabaseService: Error fetching rental listings: $e');
+      return [];
+    }
+  }
+
+  // Fetch Community Services
+  static Future<List<CommunityService>> fetchCommunityServices() async {
+    try {
+      debugPrint('SupabaseService: Fetching community services...');
+      final response = await client
+          .from('community_services')
+          .select()
+          .eq('is_active', true)
+          .order('is_featured', ascending: false)
+          .order('display_order', ascending: true);
+
+      debugPrint(
+          'SupabaseService: Raw response for community services: $response');
+      final list = response as List;
+      debugPrint('SupabaseService: Fetched ${list.length} community services');
+      return list.map((m) => CommunityService.fromJson(m)).toList();
+    } catch (e) {
+      debugPrint('SupabaseService: Error fetching community services: $e');
       return [];
     }
   }
@@ -134,55 +176,85 @@ class SupabaseService {
     // Note: This is currently hardcoded but structure is ready for Supabase
     return [
       Service(
-        title: 'College Application Support',
+        title: 'Visa Form Preparation (Non-Legal)',
         description:
-            'Guide through admission process, essay review, and application submission.',
+            'Expert assistance with visa application forms and documentation.',
+        icon: FontAwesomeIcons.fileLines,
+        features: [
+          'Complete visa application form assistance',
+          'Document checklist and organization',
+          'Application review and verification',
+          'Submission guidance and tracking',
+          'Interview preparation support',
+        ],
+      ),
+      Service(
+        title: 'College & University Application Support',
+        description:
+            'Comprehensive guidance through higher education admissions.',
         icon: FontAwesomeIcons.graduationCap,
         features: [
-          'Admission Counseling',
-          'Essay Assistance',
-          'Financial Aid Guidance'
+          'College selection and research assistance',
+          'Application form completion support',
+          'Essay review and feedback',
+          'Transcript and document preparation',
+          'Financial aid application guidance',
+          'Deadline tracking and management',
         ],
       ),
       Service(
-        title: 'Foreign Document Evaluation',
-        description:
-            'Credential evaluation services for international students and professionals.',
+        title: 'Document Evaluation Application Support',
+        description: 'Professional help with credential evaluation services.',
         icon: FontAwesomeIcons.globe,
         features: [
-          'Transcript Analysis',
-          'Translation Services',
-          'Equivalency Reports'
+          'Credential evaluation agency selection',
+          'Application form assistance',
+          'Document translation coordination',
+          'Authentication and verification support',
+          'Progress tracking and follow-up',
         ],
       ),
       Service(
-        title: 'Professional Licensing',
+        title: 'Exam & Licensing Board Application Support',
         description:
             'Support for professional certification and licensing applications.',
         icon: FontAwesomeIcons.userCheck,
         features: [
-          'Requirements Analysis',
-          'Documentation Prep',
-          'Exam Registration'
+          'Licensing board application assistance',
+          'Exam registration support',
+          'Eligibility requirement review',
+          'Documentation preparation',
+          'Application status monitoring',
+          'Renewal and continuing education tracking',
         ],
       ),
       Service(
-        title: 'Career Support',
+        title: 'Career Readiness & Job Application Support',
         description:
-            'Resume building, interview prep, and job search strategies.',
+            'Strategic assistance for job seekers and career changers.',
         icon: FontAwesomeIcons.briefcase,
         features: [
-          'Resume Writing',
-          'Mock Interviews',
-          'Linkedln Optimization'
+          'Resume and CV optimization',
+          'Cover letter development',
+          'LinkedIn profile enhancement',
+          'Job search strategy consultation',
+          'ATS optimization',
+          'Interview preparation coaching',
         ],
       ),
       Service(
-        title: 'Health Insurance Support',
+        title: 'Business License & Related Application Support',
         description:
-            'Guidance on health insurance applications and plan selection.',
-        icon: FontAwesomeIcons.fileMedical,
-        features: ['Plan Comparison', 'Application Help', 'Renewal Support'],
+            'Complete support for business registration and licensing.',
+        icon: FontAwesomeIcons.building,
+        features: [
+          'Business entity selection guidance',
+          'License and permit identification',
+          'Application form completion',
+          'Regulatory compliance assistance',
+          'Renewal and update support',
+          'Multi-jurisdictional applications',
+        ],
       ),
     ];
   }

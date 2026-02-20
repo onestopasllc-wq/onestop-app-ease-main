@@ -31,15 +31,19 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   void initState() {
     super.initState();
-    _user = SupabaseService.client.auth.currentUser;
-    _authSubscription =
-        SupabaseService.client.auth.onAuthStateChange.listen((data) {
-      if (mounted) {
-        setState(() {
-          _user = data.session?.user;
-        });
-      }
-    });
+    try {
+      _user = SupabaseService.client.auth.currentUser;
+      _authSubscription =
+          SupabaseService.client.auth.onAuthStateChange.listen((data) {
+        if (mounted) {
+          setState(() {
+            _user = data.session?.user;
+          });
+        }
+      });
+    } catch (e) {
+      debugPrint('Supabase not initialized in MainScaffold: $e');
+    }
   }
 
   @override
@@ -58,6 +62,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         );
       }
     } catch (e) {
+      debugPrint('Error logging out: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error logging out: $e')),
@@ -138,12 +143,14 @@ class _MainScaffoldState extends State<MainScaffold> {
               '/services', 2),
           _buildDrawerItem(
               context, Icons.home_work_outlined, 'Rentals', '/rentals', 3),
+          _buildDrawerItem(context, Icons.people_outline, 'Community Services',
+              '/community-services', 5),
           _buildDrawerItem(
-              context, Icons.work_outline, 'Legal Jobs', '/jobs', -1),
-          _buildDrawerItem(context, Icons.car_repair_outlined, 'Dealerships',
+              context, Icons.work_outline, 'Jobs', '/jobs', -1),
+          _buildDrawerItem(context, Icons.car_repair_outlined, 'Auto Dealerships',
               '/dealerships', -1),
           _buildDrawerItem(
-              context, Icons.shield_outlined, 'Insurance', '/insurance', -1),
+              context, Icons.shield_outlined, 'Car Insurance', '/insurance', -1),
           _buildDrawerItem(context, Icons.medical_services_outlined,
               'Health Insurance', '/health-insurance', -1),
           const Divider(),

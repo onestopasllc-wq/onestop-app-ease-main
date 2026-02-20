@@ -31,7 +31,7 @@ class FAQPage extends StatelessWidget {
       {
         'question': 'How much do your services cost?',
         'answer':
-            'Pricing varies based on complexity. We require a \$10 deposit to book an appointment, which goes toward your total service fee. We\'ll provide a detailed quote after consultation.',
+            'Pricing varies based on complexity. We require a \$75 deposit to book an appointment, which goes toward your total service fee. We\'ll provide a detailed quote after consultation.',
       },
       {
         'question': 'Can you help with applications outside the US?',
@@ -63,13 +63,15 @@ class FAQPage extends StatelessWidget {
         gradient: LinearGradient(
             colors: [AppTheme.primaryBlue, AppTheme.secondaryTeal]),
       ),
-      child: const Column(
+      child: Column(
         children: [
           Text(
             'Frequently Asked Questions',
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: MediaQuery.of(context).size.width < 380 ? 28 : 32,
+                fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 16),
           Text(
@@ -145,14 +147,15 @@ class FAQPage extends StatelessWidget {
             style: TextStyle(color: AppTheme.textMuted),
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 16,
+            runSpacing: 16,
             children: [
               OutlinedButton(
                 onPressed: () => Navigator.pushNamed(context, '/contact'),
                 child: const Text('Contact Us'),
               ),
-              const SizedBox(width: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, '/appointment'),
                 child: const Text('Book Now'),

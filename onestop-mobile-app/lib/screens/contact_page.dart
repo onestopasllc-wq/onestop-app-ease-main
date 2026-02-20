@@ -62,15 +62,17 @@ class _ContactPageState extends State<ContactPage> {
         gradient: LinearGradient(
             colors: [AppTheme.primaryBlue, AppTheme.secondaryTeal]),
       ),
-      child: const Column(
+      child: Column(
         children: [
           Text(
             'Get In Touch',
             style: TextStyle(
-                color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: MediaQuery.of(context).size.width < 380 ? 28 : 32,
+                fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Have questions? We\'re here to help you every step of the way.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70, fontSize: 18),

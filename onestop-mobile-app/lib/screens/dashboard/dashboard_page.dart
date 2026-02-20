@@ -150,7 +150,7 @@ class _DashboardPageState extends State<DashboardPage> {
       crossAxisCount: 2,
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
+      childAspectRatio: MediaQuery.of(context).size.width < 380 ? 1.3 : 1.5,
       children: [
         _buildStatCard('Active Listings', _stats['active'].toString(),
             Icons.home, Colors.blue),

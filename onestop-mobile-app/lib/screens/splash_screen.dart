@@ -86,16 +86,16 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 1. Luxury Gradient Background (High Contrast for BG-removed logos)
+          // 1. Luxury Light Gradient Background (High Contrast for BG-removed logos)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF0F172A), // Midnight Blue
-                  Color(0xFF1E3A8A), // Rich Navy
-                  Color(0xFF0F172A),
+                  Color(0xFFF8FAFC), // Light Slate
+                  Color(0xFFFFFFFF), // White
+                  Color(0xFFF1F5F9), // Slate 100
                 ],
               ),
             ),
@@ -147,9 +147,9 @@ class _SplashScreenState extends State<SplashScreen>
                                 _shimmerAnimation.value + 0.4,
                               ],
                               colors: [
-                                Colors.white.withOpacity(0.1),
-                                Colors.white,
-                                Colors.white.withOpacity(0.1),
+                                Colors.grey.withOpacity(0.05),
+                                Colors.grey.withOpacity(0.4),
+                                Colors.grey.withOpacity(0.05),
                               ],
                             ).createShader(bounds);
                           },
@@ -166,7 +166,7 @@ class _SplashScreenState extends State<SplashScreen>
                         Text(
                           'YOUR COMPLETE SERVICE PORTAL',
                           style: GoogleFonts.outfit(
-                            color: Colors.white.withOpacity(0.9),
+                            color: AppTheme.textDark.withOpacity(0.8),
                             letterSpacing: 4.5,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -178,8 +178,9 @@ class _SplashScreenState extends State<SplashScreen>
                         SizedBox(
                           width: 40,
                           child: LinearProgressIndicator(
-                            backgroundColor: Colors.white.withOpacity(0.05),
-                            color: AppTheme.secondaryTeal.withOpacity(0.4),
+                            backgroundColor:
+                                AppTheme.primaryBlue.withOpacity(0.05),
+                            color: AppTheme.secondaryTeal.withOpacity(0.6),
                             minHeight: 1,
                           ),
                         ),
@@ -200,7 +201,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: Text(
                 'ONE STOP APPLICATION SERVICES LLC',
                 style: GoogleFonts.outfit(
-                  color: Colors.white.withOpacity(0.25),
+                  color: AppTheme.textDark.withOpacity(0.15),
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,

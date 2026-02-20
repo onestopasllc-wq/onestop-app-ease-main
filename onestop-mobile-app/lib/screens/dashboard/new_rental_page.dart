@@ -192,7 +192,9 @@ class _NewRentalPageState extends State<NewRentalPage> {
       currentIndex: -1,
       title: 'Post a Rental',
       body: Stepper(
-        type: StepperType.horizontal,
+        type: MediaQuery.of(context).size.width < 400
+            ? StepperType.vertical
+            : StepperType.horizontal,
         currentStep: _currentStep,
         onStepContinue: () {
           if (_currentStep < 2) {
