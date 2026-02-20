@@ -41,7 +41,8 @@ import {
   Car,
   ShieldCheck,
   HeartPulse,
-  Home
+  Home,
+  Globe
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -58,6 +59,7 @@ import { InsuranceAdmin } from "@/components/InsuranceAdmin";
 import { HealthInsuranceAdmin } from "@/components/HealthInsuranceAdmin";
 import { RentalAdmin } from "@/components/RentalAdmin";
 import { AdminRentalsCRUD } from "@/components/AdminRentalsCRUD";
+import { CommunityServicesAdmin } from "@/components/CommunityServicesAdmin";
 import { z } from "zod";
 
 // Input validation schemas
@@ -1370,6 +1372,26 @@ const Admin = () => {
                     <div className="pt-8 border-t">
                       <AdminRentalsCRUD />
                     </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                id="community-services"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl mt-8">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <Globe className="h-5 w-5 text-primary" />
+                      Community Services & Classifieds
+                    </CardTitle>
+                    <CardDescription>Manage local directory and service listings</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CommunityServicesAdmin />
                   </CardContent>
                 </Card>
               </motion.div>

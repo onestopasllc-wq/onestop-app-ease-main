@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Loader2, Upload, Home, check, DollarSign, Image as ImageIcon, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Zod Schema for validation
+// Zod Schema for validationp
 const rentalSchema = z.object({
     title: z.string().min(5, "Title must be at least 5 characters"),
     description: z.string().min(20, "Description must be at least 20 characters"),

@@ -22,12 +22,12 @@ interface Testimonial {
 
 const Home = () => {
   const services = [
-    // {
-    //   icon: <FileText className="w-12 h-12" />,
-    //   title: "Visa Form Assistance (Non-Legal)",
-    //   description:
-    //     "Expert support with visa application forms and documentation preparation. We guide you step-by-step to ensure accurate and complete submissions without providing legal advice.",
-    // },
+    {
+      icon: <FileText className="w-12 h-12" />,
+      title: "Visa Form Assistance (Non-Legal)",
+      description:
+        "Expert support with visa application forms and documentation preparation. We guide you step-by-step to ensure accurate and complete submissions without providing legal advice.",
+    },
     {
       icon: <GraduationCap className="w-12 h-12" />,
       title: "College & University Application Support",
@@ -52,12 +52,12 @@ const Home = () => {
       description:
         "Strategic support for job applications, résumé preparation, and career readiness. We help you confidently apply to positions that match your skills and goals.",
     },
-    // {
-    //   icon: <Building2 className="w-12 h-12" />,
-    //   title: "Business License Application Support",
-    //   description:
-    //     "tComplete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
-    // },
+    {
+      icon: <Building2 className="w-12 h-12" />,
+      title: "Business License Application Support",
+      description:
+        "tComplete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
+    },
   ];
 
 

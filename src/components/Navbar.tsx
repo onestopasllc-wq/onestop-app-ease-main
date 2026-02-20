@@ -30,6 +30,7 @@ const Navbar = () => {
     { to: "/insurance", label: "Insurance" },
     { to: "/health-insurance", label: "Health Insurance" },
     { to: "/rentals", label: "Rentals" },
+    { to: "/community-services", label: "Community Services" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

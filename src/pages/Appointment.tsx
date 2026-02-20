@@ -61,12 +61,12 @@ const COUNTRIES = [
 ];
 
 const services = [
-  // "Visa Form Preparation (Non-Legal)",
+  "Visa Form Preparation (Non-Legal)",
   "College & University Application Support",
   "Document Evaluation Application Support",
   "Exam & Licensing Board Application Support",
   "Career Readiness & Job Application Support",
-  // "Business License & Related Application Support",
+  "Business License & Related Application Support",
 ];
 
 const formSchema = z.object({

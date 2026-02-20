@@ -23,6 +23,7 @@ import UserDashboardLayout from "./components/dashboard/UserDashboardLayout";
 import UserDashboard from "./pages/dashboard/UserDashboard";
 import UserListings from "./pages/dashboard/UserListings";
 import UserProfile from "./pages/dashboard/UserProfile";
+import CommunityServices from "./pages/CommunityServices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
         <Route path="/insurance" element={<Insurance />} />
         <Route path="/health-insurance" element={<HealthInsurance />} />
         <Route path="/rentals" element={<Rentals />} />
+        <Route path="/community-services" element={<CommunityServices />} />
 
 
         {/* User Dashboard */}
