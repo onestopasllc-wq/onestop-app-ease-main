@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { FileText, GraduationCap, Briefcase, Globe, UserCheck, Building2, CheckCircle } from "lucide-react";
+import { FileText, GraduationCap, Briefcase, Globe, UserCheck, Building2, CheckCircle, Layout, Smartphone, Settings, Boxes, Palette } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -11,7 +11,7 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 
 const Services = () => {
   const [activeService, setActiveService] = useState<string | undefined>(undefined);
-  
+
   const services = [
     {
       icon: <FileText className="w-16 h-16" />,
@@ -90,16 +90,54 @@ const Services = () => {
         "Multi-jurisdictional applications",
       ],
     },
-    
+    {
+      icon: <Layout className="w-16 h-16" />,
+      title: "Website Development",
+      description: "Professional, responsive, and high-performance web solutions.",
+      details: [
+        "Custom responsive web design",
+        "E-commerce & CMS solutions",
+        "Modern UI/UX implementation",
+        "Performance & speed optimization",
+        "SEO-friendly architecture",
+        "Ongoing maintenance and support",
+      ],
+    },
+    {
+      icon: <Smartphone className="w-16 h-16" />,
+      title: "Mobile Application Development",
+      description: "Innovative iOS and Android apps tailored to your business.",
+      details: [
+        "Native iOS and Android development",
+        "Cross-platform solutions (React Native/Flutter)",
+        "User-centric mobile interface design",
+        "App Store & Play Store deployment",
+        "Push notifications & real-time features",
+        "Third-party API integrations",
+      ],
+    },
+    {
+      icon: <Palette className="w-16 h-16" />,
+      title: "Logo & Brand Identity Design",
+      description: "Professional and modern design to elevate your brand presence.",
+      details: [
+        "Modern and minimalist logo concepts",
+        "Complete brand identity development",
+        "Vector-based high-resolution assets",
+        "Typography & color palette selection",
+        "Professional brand guidelines",
+        "Social media & stationary design assets",
+      ],
+    },
   ];
 
   return (
     <div className="min-h-screen flex flex-col relative">
       <AnimatedBackground />
       <SEO
-        title="Our Services - Expert Application Support"
-        description="Comprehensive application support services including visa preparation, college applications, document evaluation, licensing boards, job applications, and business licenses. Expert guidance for every step."
-        keywords="visa form preparation, college application support, document evaluation services, licensing board applications, job application help, business license support"
+        title="Our Services - Expert Digital Development & Application Support"
+        description="Comprehensive services including Website Development, Mobile Apps, ERP Systems, Microservices, Logo Design, and Application Support for visas, college, and business licenses."
+        keywords="website development, mobile app development, ERP system, microservices, logo design, visa preparation, college application support, business license"
       />
       <Navbar />
 
@@ -142,9 +180,9 @@ const Services = () => {
             </p>
           </motion.div>
 
-          <Accordion 
-            type="single" 
-            collapsible 
+          <Accordion
+            type="single"
+            collapsible
             className="space-y-6"
             value={activeService}
             onValueChange={setActiveService}
@@ -157,15 +195,15 @@ const Services = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
               >
-                <AccordionItem 
-                  value={`item-${index}`} 
+                <AccordionItem
+                  value={`item-${index}`}
                   className="border rounded-2xl px-6 bg-card shadow-card hover:shadow-hover transition-smooth relative overflow-hidden group"
                 >
                   <AccordionTrigger className="hover:no-underline py-6 group">
                     <div className="flex items-center gap-4 text-left">
-                      <motion.div 
+                      <motion.div
                         className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-secondary/20 transition-smooth text-secondary"
-                        animate={activeService === `item-${index}` ? { 
+                        animate={activeService === `item-${index}` ? {
                           scale: [1, 1.2, 1],
                           rotate: [0, 10, -10, 0]
                         } : {}}
@@ -208,9 +246,9 @@ const Services = () => {
                                 </p>
                               </div>
                             )}
-                            <Link to="/appointment">
+                            <Link to={["Website Development", "Mobile Application Development", "Logo & Brand Identity Design"].includes(service.title) ? "/contact" : "/appointment"}>
                               <Button className="group hover:scale-105 transition-smooth">
-                                Book This Service
+                                {["Website Development", "Mobile Application Development", "Logo & Brand Identity Design"].includes(service.title) ? "Contact Us" : "Book This Service"}
                               </Button>
                             </Link>
                           </div>

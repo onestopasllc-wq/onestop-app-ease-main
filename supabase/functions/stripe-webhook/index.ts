@@ -139,13 +139,39 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
   console.log('Processing completed checkout session:', session.id);
 
   try {
+    const metadata = session.metadata || {};
+
+    // 1. Reassemble chunked metadata if present
+    let reassembledData: any = null;
+    const chunkKeys = Object.keys(metadata)
+      .filter(key => key.startsWith('data_')) // Matches new format
+      .sort((a, b) => {
+        const numA = parseInt(a.split('_')[1]);
+        const numB = parseInt(b.split('_')[1]);
+        return numA - numB;
+      });
+
+    if (chunkKeys.length > 0) {
+      console.log(`Found ${chunkKeys.length} data chunks in metadata`);
+      let combinedStr = '';
+      for (const key of chunkKeys) {
+        combinedStr += metadata[key];
+      }
+      try {
+        reassembledData = JSON.parse(combinedStr);
+        console.log('Successfully reassembled data from chunks');
+      } catch (parseError) {
+        console.error('Failed to parse reassembled data:', parseError);
+      }
+    }
+
     // Check for Rental Listing Type
-    if (session.metadata?.type === 'rental_listing') {
-      await handleRentalListing(session, supabaseAdmin);
+    if (metadata.type === 'rental_listing') {
+      await handleRentalListing(session, supabaseAdmin, reassembledData);
       return;
     }
 
-    // 1. Check if appointment already exists for this session (idempotency)
+    // 2. Check if appointment already exists for this session (idempotency)
     const { data: existingAppointment } = await supabaseAdmin
       .from('appointments')
       .select('id, appointment_date, appointment_time')
@@ -154,32 +180,25 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
 
     if (existingAppointment) {
       console.log('✅ Appointment already created for session:', session.id);
-      console.log('Existing appointment ID:', existingAppointment.id);
       return existingAppointment;
     }
 
-    // 2. Extract booking data from metadata
-    const bookingDataStr = session.metadata?.booking_data;
-    console.log('Booking data from metadata:', bookingDataStr ? 'present' : 'missing');
+    // 3. Get booking data - prefer reassembled, fallback to direct booking_data string
+    let bookingData = reassembledData;
+    if (!bookingData && metadata.booking_data) {
+      try {
+        bookingData = JSON.parse(metadata.booking_data);
+      } catch (e) {
+        console.error('Fallback booking_data parse failed');
+      }
+    }
 
-    if (!bookingDataStr) {
+    if (!bookingData) {
       console.error('No booking data found in session metadata');
-      // preventing error throw if it's some other unknown type, just log
       return;
     }
 
-    let bookingData;
-    try {
-      bookingData = JSON.parse(bookingDataStr);
-      console.log('Parsed booking data successfully');
-      console.log('Appointment date:', bookingData.appointment_date);
-      console.log('Appointment time:', bookingData.appointment_time);
-    } catch (parseError) {
-      console.error('Failed to parse booking data:', parseError);
-      throw new Error('Invalid booking data format in metadata');
-    }
-
-    // 3. Validate slot is still available
+    // 4. Validate slot is still available
     const { data: conflictingAppointments } = await supabaseAdmin
       .from('appointments')
       .select('id')
@@ -188,14 +207,10 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
       .neq('status', 'cancelled');
 
     if (conflictingAppointments && conflictingAppointments.length > 0) {
-      console.error('⚠️ Time slot conflict detected!');
-      console.error('Conflicting appointments:', conflictingAppointments);
-      // Log but continue - payment succeeded so we create anyway
       console.warn('Creating appointment despite slot conflict - admin should review');
     }
 
-    // 4. Create appointment in database
-    console.log('Creating appointment record in database...');
+    // 5. Create appointment in database
     const { data: appointment, error: insertError } = await supabaseAdmin
       .from('appointments')
       .insert({
@@ -212,7 +227,6 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
         appointment_time: bookingData.appointment_time,
         file_url: bookingData.file_url || null,
         how_heard: bookingData.how_heard || null,
-        // Payment info
         payment_status: 'paid',
         stripe_session_id: session.id,
         stripe_payment_intent_id: session.payment_intent,
@@ -223,72 +237,36 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
 
     if (insertError) {
       console.error('❌ Failed to create appointment:', insertError);
-      console.error('Error code:', insertError.code);
-      console.error('Error details:', insertError.details);
-
-      // Log to error table for manual review
-      await supabaseAdmin
-        .from('webhook_errors')
-        .insert({
-          event_id: session.id,
-          event_type: 'checkout.session.completed',
-          error_message: insertError.message,
-          error_details: JSON.stringify(insertError),
-          metadata: session.metadata,
-        })
-        .catch((logErr: any) => console.error('Failed to log error:', logErr));
-
       throw insertError;
     }
 
-    console.log('✅ Appointment created successfully!');
-    console.log('Appointment ID:', appointment.id);
-    console.log('Customer:', appointment.full_name);
-    console.log('Date/Time:', appointment.appointment_date, appointment.appointment_time);
+    console.log('✅ Appointment created successfully ID:', appointment.id);
 
-    // 5. Send notifications (don't fail the webhook if these fail)
-    console.log('Sending confirmation notifications...');
-
-    sendPaymentConfirmationEmail(appointment, supabaseAdmin)
-      .then(() => console.log('Email notification sent'))
-      .catch((err: any) => console.error('Email notification failed (non-critical):', err));
-
-    sendPaymentWhatsAppNotification(appointment, supabaseAdmin)
-      .then(() => console.log('WhatsApp notification sent'))
-      .catch((err: any) => console.error('WhatsApp notification failed (non-critical):', err));
+    // 6. Send notifications
+    sendPaymentConfirmationEmail(appointment, supabaseAdmin).catch(console.error);
+    sendPaymentWhatsAppNotification(appointment, supabaseAdmin).catch(console.error);
 
     return appointment;
   } catch (error: any) {
     console.error('❌ Error in handleCheckoutSessionCompleted:', error);
-
     // Log critical error
-    await supabaseAdmin
-      .from('webhook_errors')
-      .insert({
-        event_id: session.id,
-        event_type: 'checkout.session.completed',
-        error_message: error.message,
-        error_details: JSON.stringify({
-          error: error.toString(),
-          stack: error.stack
-        }),
-        metadata: session.metadata,
-      })
-      .catch((logErr: any) => console.error('Failed to log error:', logErr));
-
+    await supabaseAdmin.from('webhook_errors').insert({
+      event_id: session.id,
+      event_type: 'checkout.session.completed',
+      error_message: error.message,
+      metadata: session.metadata,
+    }).catch(console.error);
     throw error;
   }
 }
 
 async function handleCheckoutSessionExpired(session: any, supabaseAdmin: any) {
-  console.log('Processing expired checkout session:', session.id);
-  // Just log for analytics, no action needed for subscription usually unless we cancel pending
-  console.log('Checkout session expired');
+  console.log('Checkout session expired:', session.id);
 }
 
 async function sendPaymentConfirmationEmail(appointment: any, supabaseAdmin: any) {
   try {
-    const { error } = await supabaseAdmin.functions.invoke('send-confirmation-email', {
+    await supabaseAdmin.functions.invoke('send-confirmation-email', {
       body: {
         to: appointment.email,
         name: appointment.full_name,
@@ -298,17 +276,14 @@ async function sendPaymentConfirmationEmail(appointment: any, supabaseAdmin: any
         paymentStatus: 'paid'
       }
     });
-
-    if (error) throw error;
-    console.log('Payment confirmation email sent');
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('Email failed:', error);
   }
 }
 
 async function sendPaymentWhatsAppNotification(appointment: any, supabaseAdmin: any) {
   try {
-    const { error } = await supabaseAdmin.functions.invoke('send-whatsapp-notification', {
+    await supabaseAdmin.functions.invoke('send-whatsapp-notification', {
       body: {
         customerName: appointment.full_name,
         email: appointment.email,
@@ -320,46 +295,22 @@ async function sendPaymentWhatsAppNotification(appointment: any, supabaseAdmin: 
         paymentStatus: 'paid'
       }
     });
-
-    if (error) throw error;
-    console.log('WhatsApp notification sent');
   } catch (error) {
-    console.error('Failed to send WhatsApp:', error);
+    console.error('WhatsApp failed:', error);
   }
 }
 
-async function handleRentalListing(session: any, supabaseAdmin: any) {
+async function handleRentalListing(session: any, supabaseAdmin: any, reassembledData: any) {
   console.log('🏠 Processing Rental Listing Payment:', session.id);
 
   try {
-    // 1. Reassemble listing data from chunks
-    const metadata = session.metadata || {};
-    let listingDataStr = '';
+    const listingData = reassembledData;
 
-    // Sort keys and combine chunks
-    const chunkKeys = Object.keys(metadata)
-      .filter(key => key.startsWith('data_chunk_'))
-      .sort((a, b) => {
-        const numA = parseInt(a.split('_')[2]);
-        const numB = parseInt(b.split('_')[2]);
-        return numA - numB;
-      });
-
-    console.log(`Found ${chunkKeys.length} data chunks in metadata`);
-
-    for (const key of chunkKeys) {
-      listingDataStr += metadata[key];
+    if (!listingData) {
+      throw new Error("No reassembled listing data found in metadata");
     }
 
-    if (!listingDataStr) {
-      throw new Error("No listing data found in metadata chunks");
-    }
-
-    const listingData = JSON.parse(listingDataStr);
-    console.log('Successfully reassembled listing data for:', listingData.title);
-
-    // 2. Insert into database
-    console.log(`Creating new listing for user ${listingData.user_id}...`);
+    console.log('Creating listing for:', listingData.title);
 
     const { data: newListing, error: insertError } = await supabaseAdmin
       .from('rental_listings')
@@ -388,8 +339,7 @@ async function handleRentalListing(session: any, supabaseAdmin: any) {
       throw insertError;
     }
 
-    console.log(`✅ Rental listing created successfully with ID: ${newListing.id}`);
-
+    console.log(`✅ Rental listing created ID: ${newListing.id}`);
   } catch (error: any) {
     console.error('❌ Error handling rental listing:', error);
     throw error;
