@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:onestop_mobile_app/theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:onestop_mobile_app/widgets/main_scaffold.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
@@ -21,18 +23,38 @@ class _ContactPageState extends State<ContactPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isSubmitting = true);
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Message Sent! We\'ll get back to you soon.')),
+      try {
+        final supabase = Supabase.instance.client;
+        await supabase.functions.invoke(
+          'send-contact-email',
+          body: {
+            'name': _nameController.text,
+            'email': _emailController.text,
+            'message': _messageController.text,
+          },
         );
-        _nameController.clear();
-        _emailController.clear();
-        _messageController.clear();
-        setState(() => _isSubmitting = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Message Sent! We\'ll get back to you soon.')),
+          );
+          _nameController.clear();
+          _emailController.clear();
+          _messageController.clear();
+        }
+      } catch (e) {
+        debugPrint('Error sending contact email: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Failed to send message. Please try again.')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
       }
     }
   }
@@ -152,7 +174,8 @@ class _ContactPageState extends State<ContactPage> {
           const SizedBox(height: 24),
           _buildContactCard(Icons.phone, 'Phone', '+1 (571) 660-4984',
               sub: 'Mon - Fri, 9 AM - 6 PM EST'),
-          _buildContactCard(Icons.email, 'Email', 'info@onestopasllc.com',
+          _buildContactCard(
+              Icons.email, 'Email', 'onestopapplicationservicesllc@gmail.com',
               sub: 'We typically respond within 24 hours'),
           _buildContactCard(FontAwesomeIcons.telegram, 'Telegram',
               '@OneStop_Application_Services_LLC'),
@@ -200,23 +223,28 @@ class _ContactPageState extends State<ContactPage> {
               IconButton(
                   icon: const FaIcon(FontAwesomeIcons.facebook,
                       color: Color(0xFF1877F2)),
-                  onPressed: () {}),
+                  onPressed: () => launchUrl(Uri.parse(
+                      'https://www.facebook.com/share/17A6QTUppF/?mibextid=wwXIfr'))),
               IconButton(
                   icon: const FaIcon(FontAwesomeIcons.instagram,
                       color: Color(0xFFE4405F)),
-                  onPressed: () {}),
+                  onPressed: () => launchUrl(Uri.parse(
+                      'https://www.instagram.com/onestop_application_services?igsh=dXZrZXlkYjV1YXRh&utm_source=qr'))),
               IconButton(
                   icon: const FaIcon(FontAwesomeIcons.whatsapp,
                       color: Color(0xFF25D366)),
-                  onPressed: () {}),
+                  onPressed: () =>
+                      launchUrl(Uri.parse('https://wa.me/15716604984'))),
               IconButton(
                   icon: const FaIcon(FontAwesomeIcons.youtube,
                       color: Color(0xFFFF0000)),
-                  onPressed: () {}),
+                  onPressed: () => launchUrl(Uri.parse(
+                      'https://youtube.com/@onestopapplicationservicesllc?si=1cH9ZQ0IiDgvdYsl'))),
               IconButton(
                   icon: const FaIcon(FontAwesomeIcons.tiktok,
                       color: Colors.black),
-                  onPressed: () {}),
+                  onPressed: () => launchUrl(Uri.parse(
+                      'https://www.tiktok.com/@onestop.applicati?_t=ZP-90fcXx8MTGQ&_r=1'))),
             ],
           ),
         ],

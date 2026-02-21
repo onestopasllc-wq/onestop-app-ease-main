@@ -167,7 +167,10 @@ class _NewRentalPageState extends State<NewRentalPage> {
       if (data != null && data['url'] != null) {
         final url = Uri.parse(data['url']);
         if (await canLaunchUrl(url)) {
-          await launchUrl(url);
+          await launchUrl(
+            url,
+            mode: LaunchMode.inAppBrowserView, // Forces in-app experience
+          );
           if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
         } else {
           throw 'Could not launch payment URL';

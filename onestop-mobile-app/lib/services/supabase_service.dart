@@ -256,6 +256,48 @@ class SupabaseService {
           'Multi-jurisdictional applications',
         ],
       ),
+      Service(
+        title: 'Website Development',
+        description:
+            'Professional, responsive, and high-performance web solutions.',
+        icon: FontAwesomeIcons.laptopCode,
+        features: [
+          'Custom responsive web design',
+          'E-commerce & CMS solutions',
+          'Modern UI/UX implementation',
+          'Performance & speed optimization',
+          'SEO-friendly architecture',
+          'Ongoing maintenance and support',
+        ],
+      ),
+      Service(
+        title: 'Mobile Application Development',
+        description:
+            'Innovative iOS and Android apps tailored to your business.',
+        icon: FontAwesomeIcons.mobileScreenButton,
+        features: [
+          'Native iOS and Android development',
+          'Cross-platform solutions (Flutter/React Native)',
+          'User-centric mobile interface design',
+          'App Store & Play Store deployment',
+          'Push notifications & real-time features',
+          'Third-party API integrations',
+        ],
+      ),
+      Service(
+        title: 'Logo & Brand Identity Design',
+        description:
+            'Professional and modern design to elevate your brand presence.',
+        icon: FontAwesomeIcons.palette,
+        features: [
+          'Modern and minimalist logo concepts',
+          'Complete brand identity development',
+          'Vector-based high-resolution assets',
+          'Typography & color palette selection',
+          'Professional brand guidelines',
+          'Social media & design assets',
+        ],
+      ),
     ];
   }
 }

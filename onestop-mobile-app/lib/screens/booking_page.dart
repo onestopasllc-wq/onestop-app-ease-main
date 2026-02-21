@@ -238,6 +238,8 @@ class _BookingPageState extends State<BookingPage> {
   // State for dynamic slots
   List<String> _availableSlots = [];
   bool _loadingSlots = false;
+  List<Map<String, dynamic>> _workingHours = [];
+  List<DateTime> _blockedDates = [];
 
   final List<String> _servicesList = [
     "Visa Form Preparation (Non-Legal)",
@@ -246,6 +248,9 @@ class _BookingPageState extends State<BookingPage> {
     "Exam & Licensing Board Application Support",
     "Career Readiness & Job Application Support",
     "Business License & Related Application Support",
+    "Website Development",
+    "Mobile Application Development",
+    "Logo & Brand Identity Design",
   ];
 
   final List<String> _contactMethods = [
@@ -463,6 +468,21 @@ class _BookingPageState extends State<BookingPage> {
               initialDate: DateTime.now().add(const Duration(days: 1)),
               firstDate: DateTime.now(),
               lastDate: DateTime.now().add(const Duration(days: 90)),
+              selectableDayPredicate: (date) {
+                // Disable blocked dates
+                if (_blockedDates.any((blocked) =>
+                    blocked.year == date.year &&
+                    blocked.month == date.month &&
+                    blocked.day == date.day)) {
+                  return false;
+                }
+                // Check if we have working hours for this day of week
+                // date.weekday: 1 (Mon) to 7 (Sun)
+                // working_hours.day_of_week: 0 (Sun) to 6 (Sat)
+                final dayOfWeek = date.weekday % 7;
+                return _workingHours
+                    .any((wh) => wh['day_of_week'] == dayOfWeek);
+              },
             );
             if (date != null) {
               setState(() {
@@ -565,20 +585,95 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Future<void> _fetchSlots(DateTime date) async {
+    if (_supabase == null) return;
     setState(() => _loadingSlots = true);
-    // Mocking slot fetch logic
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() {
-      _availableSlots = [
-        "09:00 AM",
-        "10:00 AM",
-        "11:00 AM",
-        "01:00 PM",
-        "02:00 PM",
-        "03:00 PM"
-      ];
-      _loadingSlots = false;
-    });
+
+    try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final dayOfWeek = date.weekday % 7; // Sunday is 0
+
+      // 1. Get working hours for this day
+      final workingHour = _workingHours.firstWhere(
+        (wh) => wh['day_of_week'] == dayOfWeek,
+        orElse: () => {},
+      );
+
+      if (workingHour.isEmpty) {
+        setState(() {
+          _availableSlots = [];
+          _loadingSlots = false;
+        });
+        return;
+      }
+
+      // 2. Generate slots
+      final List<String> slots = [];
+      final startTimeStr = workingHour['start_time'] as String;
+      final endTimeStr = workingHour['end_time'] as String;
+      final slotDuration =
+          (workingHour['slot_duration'] as num?)?.toInt() ?? 60;
+
+      DateTime currentTime = DateFormat('HH:mm:ss').parse(startTimeStr);
+      final endTime = DateFormat('HH:mm:ss').parse(endTimeStr);
+
+      while (currentTime.isBefore(endTime)) {
+        slots.add(DateFormat('HH:mm').format(currentTime));
+        currentTime = currentTime.add(Duration(minutes: slotDuration));
+      }
+
+      // 3. Fetch existing appointments
+      final response = await _supabase!
+          .from('appointments')
+          .select('appointment_time')
+          .eq('appointment_date', dateStr)
+          .neq('status', 'cancelled');
+
+      final List<String> bookedSlots = (response as List)
+          .map((apt) => (apt['appointment_time'] as String).substring(0, 5))
+          .toList();
+
+      // 4. Filter available slots
+      setState(() {
+        _availableSlots =
+            slots.where((slot) => !bookedSlots.contains(slot)).map((slot) {
+          // Convert 24h to 12h for display
+          final time = DateFormat('HH:mm').parse(slot);
+          return DateFormat('hh:mm a').format(time);
+        }).toList();
+        _loadingSlots = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching slots: $e');
+      setState(() => _loadingSlots = false);
+    }
+  }
+
+  Future<void> _fetchWorkingHours() async {
+    if (_supabase == null) return;
+    try {
+      final response =
+          await _supabase!.from('working_hours').select().eq('is_active', true);
+      setState(() {
+        _workingHours = List<Map<String, dynamic>>.from(response);
+      });
+    } catch (e) {
+      debugPrint('Error fetching working hours: $e');
+    }
+  }
+
+  Future<void> _fetchBlockedDates() async {
+    if (_supabase == null) return;
+    try {
+      final response =
+          await _supabase!.from('blocked_dates').select('blocked_date');
+      setState(() {
+        _blockedDates = (response as List)
+            .map((d) => DateTime.parse(d['blocked_date'] as String))
+            .toList();
+      });
+    } catch (e) {
+      debugPrint('Error fetching blocked dates: $e');
+    }
   }
 
   void _handleBooking() async {
@@ -621,76 +716,24 @@ class _BookingPageState extends State<BookingPage> {
         'status': 'pending',
       };
 
-      if (kIsWeb) {
-        // --- WEB FALLBACK ---
-        debugPrint('BookingPage: Running on Web, using checkout URL flow...');
-        final checkoutData =
-            await StripeService.createCheckoutSession(bookingData);
+      // --- UNIFIED WEB CHECKOUT FLOW ---
+      debugPrint('BookingPage: Initiating unified web checkout flow...');
+      final checkoutData =
+          await StripeService.createCheckoutSession(bookingData);
 
-        if (checkoutData == null || checkoutData['url'] == null) {
-          throw Exception('Failed to create checkout session');
-        }
-
-        final url = Uri.parse(checkoutData['url']);
-        if (await canLaunchUrl(url)) {
-          await launchUrl(url, mode: LaunchMode.externalApplication);
-        } else {
-          throw Exception('Could not launch payment URL');
-        }
-        return; // Web usually relies on the success_url redirect
+      if (checkoutData == null || checkoutData['url'] == null) {
+        throw Exception('Failed to create checkout session');
       }
 
-      // --- MOBILE FLOW ---
-      // 1. Create Payment Intent
-      final intentData = await StripeService.createPaymentIntent(bookingData);
-      if (intentData == null) {
-        throw Exception('Failed to initialize payment');
-      }
-
-      // 2. Present Payment Sheet
-      final success = await StripeService.presentPaymentSheet(
-        clientSecret: intentData['paymentIntent'],
-        publishableKey: intentData['publishableKey'],
-      );
-
-      if (success && _supabase != null) {
-        // 3. Save to Supabase
-        await _supabase!.from('appointments').insert({
-          ...bookingData,
-          'status': 'confirmed',
-          'payment_status': 'paid',
-          'stripe_payment_intent_id': intentData['paymentIntentId'],
-        });
-
-        if (mounted) {
-          Navigator.pushReplacementNamed(
-            context,
-            '/appointment-success',
-            arguments: {'session_id': intentData['paymentIntentId']},
-          );
-        }
-      } else {
-        // --- FALLBACK TO CHECKOUT URL IF NATIVE FAILS ---
-        debugPrint(
-            'BookingPage: Native payment sheet failed or cancelled. Trying web fallback...');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  'Native payment failed. Redirecting to secure checkout...')),
+      final url = Uri.parse(checkoutData['url']);
+      // Using default launchUrl settings which optimize for in-app browser tabs
+      if (await canLaunchUrl(url)) {
+        await launchUrl(
+          url,
+          mode: LaunchMode.inAppBrowserView, // Forces in-app experience
         );
-
-        final checkoutData =
-            await StripeService.createCheckoutSession(bookingData);
-        if (checkoutData != null && checkoutData['url'] != null) {
-          final url = Uri.parse(checkoutData['url']);
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          } else {
-            throw Exception('Could not launch payment URL');
-          }
-        } else {
-          throw Exception('Payment process failed. Please contact support.');
-        }
+      } else {
+        throw Exception('Could not launch payment URL');
       }
     } catch (e) {
       debugPrint('Booking Error Detailed: $e');
@@ -734,6 +777,8 @@ class _BookingPageState extends State<BookingPage> {
     super.initState();
     try {
       _supabase = Supabase.instance.client;
+      _fetchWorkingHours();
+      _fetchBlockedDates();
     } catch (e) {
       debugPrint('Supabase not initialized in BookingPage: $e');
     }
