@@ -105,25 +105,9 @@ class _ServicesPageState extends State<ServicesPage> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  final digitalServices = [
-                                    "Website Development",
-                                    "Mobile Application Development",
-                                    "Logo & Brand Identity Design"
-                                  ];
-                                  if (digitalServices.contains(service.title)) {
-                                    Navigator.pushNamed(context, '/contact');
-                                  } else {
-                                    Navigator.pushNamed(
-                                        context, '/appointment');
-                                  }
+                                  Navigator.pushNamed(context, '/appointment');
                                 },
-                                child: Text([
-                                  "Website Development",
-                                  "Mobile Application Development",
-                                  "Logo & Brand Identity Design"
-                                ].contains(service.title)
-                                    ? 'Contact Us'
-                                    : 'Inquire Now'),
+                                child: const Text('Inquire Now'),
                               ),
                             ),
                           ],

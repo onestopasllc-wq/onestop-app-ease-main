@@ -248,9 +248,6 @@ class _BookingPageState extends State<BookingPage> {
     "Exam & Licensing Board Application Support",
     "Career Readiness & Job Application Support",
     "Business License & Related Application Support",
-    "Website Development",
-    "Mobile Application Development",
-    "Logo & Brand Identity Design",
   ];
 
   final List<String> _contactMethods = [
