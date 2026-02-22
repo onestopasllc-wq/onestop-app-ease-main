@@ -24,6 +24,7 @@ import UserDashboard from "./pages/dashboard/UserDashboard";
 import UserListings from "./pages/dashboard/UserListings";
 import UserProfile from "./pages/dashboard/UserProfile";
 import CommunityServices from "./pages/CommunityServices";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
         <Route path="/health-insurance" element={<HealthInsurance />} />
         <Route path="/rentals" element={<Rentals />} />
         <Route path="/community-services" element={<CommunityServices />} />
+        <Route path="/privacy" element={<Privacy />} />
 
 
         {/* User Dashboard */}

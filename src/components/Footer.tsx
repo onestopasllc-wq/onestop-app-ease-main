@@ -19,6 +19,9 @@ const Footer = () => {
               <Link to="/job" className="block text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
                 Jobs
               </Link>
+              <Link to="/privacy" className="block text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
+                Privacy Policy
+              </Link>
               <a
                 href="tel:+15716604984"
                 className="flex items-center space-x-2 text-primary-foreground/80 hover:text-primary-foreground transition-smooth"
