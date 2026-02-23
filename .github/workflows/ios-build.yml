@@ -73,13 +73,13 @@ jobs:
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
           
-          # Decode using printf to handle long strings safely
-          printf '%s' "${P12_BASE64}" | base64 --decode > certificate.p12
+          # Decode using tr to strip potential Windows BOM or whitespace
+          echo "${P12_BASE64}" | tr -dc 'a-zA-Z0-9+/=' | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "${P12_PASSWORD}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
           
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          printf '%s' "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
+          echo "${PROVISION_BASE64}" | tr -dc 'a-zA-Z0-9+/=' | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
       - name: Inspect and Self-Correct Provisioning Profile
         run: |

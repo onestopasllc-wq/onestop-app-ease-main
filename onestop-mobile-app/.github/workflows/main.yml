@@ -82,14 +82,14 @@ jobs:
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
 
-          # Decode and import p12
-          echo "${P12_BASE64}" | base64 --decode > certificate.p12
+          # Decode and import p12 with whitespace/BOM stripping
+          echo "${P12_BASE64}" | tr -dc 'a-zA-Z0-9+/=' | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "${P12_PASSWORD}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-
-          # Decode and install provisioning profile
+ 
+          # Decode and install provisioning profile with whitespace/BOM stripping
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          printf '%s' "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
+          echo "${PROVISION_BASE64}" | tr -dc 'a-zA-Z0-9+/=' | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
       - name: Inspect and Self-Correct Provisioning Profile
         run: |
