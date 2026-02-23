@@ -79,10 +79,15 @@ jobs:
           echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
       - name: Debug Keychain Identities
-        run: security find-identity -v -p codesigning build.keychain || true
+        run: |
+          security find-identity -v -p codesigning build.keychain
+          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
         working-directory: onestop-mobile-app
 
       - name: Build and Sign iOS IPA
+        env:
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          PROVISIONING_PROFILE: "c928ab27-ca43-439b-a34b-106c83c33f11"
         run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
         working-directory: onestop-mobile-app
 
