@@ -69,6 +69,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          echo "Diagnostic: P12 string length: ${#P12_BASE64}"
+          echo "Diagnostic: Provisioning string length: ${#PROVISION_BASE64}"
+
           # Basic checks
           if [ -z "${P12_BASE64:-}" ] || [ -z "${P12_PASSWORD:-}" ]; then
             echo "ERROR: IOS_P12_CERTIFICATE_BASE64 or IOS_P12_PASSWORD secret is empty or missing"
