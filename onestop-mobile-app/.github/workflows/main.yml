@@ -113,7 +113,7 @@ jobs:
           security find-identity -v -p codesigning build.keychain
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: Build and Sign iOS IPA
+      - name: Rebuild iOS IPA with Codesigning
         env:
           CODE_SIGN_IDENTITY: "Apple Distribution"
           PROVISIONING_PROFILE: ${{ env.PROVISIONING_PROFILE_UUID }}

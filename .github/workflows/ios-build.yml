@@ -93,7 +93,7 @@ jobs:
           ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
         working-directory: onestop-mobile-app
 
-      - name: Build and Sign iOS IPA
+      - name: Rebuild iOS IPA with Codesigning
         env:
           CODE_SIGN_IDENTITY: "Apple Distribution"
           PROVISIONING_PROFILE: ${{ env.PROVISIONING_PROFILE_UUID }}
