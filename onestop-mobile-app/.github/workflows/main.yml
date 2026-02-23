@@ -91,8 +91,12 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
-      - name: Rebuild iOS IPA with Codesigning
-        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+      - name: Build and Sign iOS IPA
+        run: |
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --code-sign-identity="Apple Distribution" \
+            --provisioning-profile="OneStop_AppStore_Profile"
 
       - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
