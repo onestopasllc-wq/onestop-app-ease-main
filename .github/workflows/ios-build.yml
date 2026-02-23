@@ -72,17 +72,38 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
-          echo "${P12_BASE64}" | base64 --decode > certificate.p12
+          
+          # Decode using printf to handle long strings safely
+          printf '%s' "${P12_BASE64}" | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "${P12_PASSWORD}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+          
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
+          printf '%s' "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
       - name: Inspect and Self-Correct Provisioning Profile
         run: |
           PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
-          security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
           
+          echo "File Diagnostics:"
+          ls -l "$PROFILE_PATH"
+          file "$PROFILE_PATH"
+          
+          # Try to decode the CMS message (Provisioning Profile)
+          if ! security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist 2>/dev/null; then
+             echo "Decode failed. Checking for raw Plist content..."
+             if grep -q "<?xml" "$PROFILE_PATH"; then
+                echo "File identified as direct Plist. Continuing..."
+                cp "$PROFILE_PATH" /tmp/profile.plist
+             else
+                echo "ERROR: Corrupted or invalid profile file."
+                echo "First 100 bytes (hex dump):"
+                head -c 100 "$PROFILE_PATH" | od -t c
+                exit 1
+             fi
+          fi
+          
+          # Use metadata to update the environment and ExportOptions.plist
           PROV_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)
           PROV_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)
           PROV_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /tmp/profile.plist)
@@ -91,9 +112,8 @@ jobs:
           echo "PROVISIONING_PROFILE_UUID=$PROV_UUID" >> $GITHUB_ENV
           echo "PROVISIONING_PROFILE_TEAM=$PROV_TEAM" >> $GITHUB_ENV
           
-          # Update ExportOptions in the mobile app directory
           sed -i '' "s/OneStop_AppStore_Profile/$PROV_NAME/g" onestop-mobile-app/ios/ExportOptions.plist
-          echo "Updated ExportOptions.plist with profile name: $PROV_NAME"
+          echo "Updated ExportOptions.plist with dynamic profile name: $PROV_NAME"
         working-directory: onestop-mobile-app
 
       - name: Debug Keychain Identities
