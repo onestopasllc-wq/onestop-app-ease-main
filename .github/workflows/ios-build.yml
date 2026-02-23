@@ -57,19 +57,23 @@ jobs:
         run: flutter pub get
         working-directory: onestop-mobile-app
 
-      - name: Build iOS Runner
-        run: flutter build ios --release --no-codesign
+      - name: Build iOS IPA
+        run: flutter build ipa --release --no-codesign
         working-directory: onestop-mobile-app
 
-      - name: Package iOS IPA
-        run: |
-          cd onestop-mobile-app/build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
-          zip -r onestop-app.ipa Payload/
-
-      - name: Upload iOS Artifacts
+      # NEW: Placeholder for codesigning (Requires .p12 and .mobileprovision)
+      
+      - name: Upload iOS IPA
         uses: actions/upload-artifact@v4
         with:
           name: ios-release-ipa
-          path: onestop-mobile-app/build/ios/iphoneos/onestop-app.ipa
+          path: onestop-mobile-app/build/ios/ipa/*.ipa
+
+      # FUTURE: Automated TestFlight Upload
+      # - name: Upload to TestFlight
+      #   uses: apple-actions/upload-testflight-build@v1
+      #   with:
+      #     app-path: onestop-mobile-app/build/ios/ipa/*.ipa
+      #     issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      #     api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      #     api-key-content: ${{ secrets.APP_STORE_CONNECT_P8_CONTENT }}
