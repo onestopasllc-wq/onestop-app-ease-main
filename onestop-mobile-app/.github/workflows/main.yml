@@ -89,12 +89,30 @@ jobs:
 
           # Decode and install provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
+          printf '%s' "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
       - name: Inspect and Self-Correct Provisioning Profile
         run: |
           PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
-          security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
+          
+          echo "Checking file info..."
+          ls -l "$PROFILE_PATH"
+          file "$PROFILE_PATH"
+          
+          # Attempt to dump the profile. 
+          # If this fails, the file might be raw Plist instead of CMS, or corrupted.
+          if ! security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist 2>/dev/null; then
+             echo "Standard CMS decode failed. Checking if it's already a Plist..."
+             if grep -q "<?xml" "$PROFILE_PATH"; then
+                echo "File is already a Plist. Copying directly."
+                cp "$PROFILE_PATH" /tmp/profile.plist
+             else
+                echo "ERROR: Provisioning profile is not a valid CMS message or Plist."
+                echo "First 100 bytes of file (diagnostic):"
+                head -c 100 "$PROFILE_PATH" | od -t c
+                exit 1
+             fi
+          fi
           
           # Extract metadata
           PROV_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)
@@ -105,10 +123,8 @@ jobs:
           echo "PROVISIONING_PROFILE_UUID=$PROV_UUID" >> $GITHUB_ENV
           echo "PROVISIONING_PROFILE_TEAM=$PROV_TEAM" >> $GITHUB_ENV
           
-          echo "Found Profile: $PROV_NAME ($PROV_UUID) for Team: $PROV_TEAM"
+          echo "Success! Found Profile: $PROV_NAME ($PROV_UUID) for Team: $PROV_TEAM"
           
-          # Self-correct ExportOptions.plist to match the profile's real name
-          # We replace 'OneStop_AppStore_Profile' with the $PROV_NAME found inside the profile
           sed -i '' "s/OneStop_AppStore_Profile/$PROV_NAME/g" ios/ExportOptions.plist
           echo "Updated ExportOptions.plist with profile name: $PROV_NAME"
 
