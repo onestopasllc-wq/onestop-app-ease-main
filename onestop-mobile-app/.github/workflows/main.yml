@@ -91,6 +91,23 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
+      - name: Inspect and Export Provisioning Profile Metadata
+        run: |
+          PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
+          # Dump the profile to a temporary plist
+          security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
+
+          # Read values using PlistBuddy
+          PROV_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)
+          PROV_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)
+          PROV_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /tmp/profile.plist)
+          
+          echo "PROVISIONING_PROFILE_NAME=$PROV_NAME" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_UUID=$PROV_UUID" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_TEAM=$PROV_TEAM" >> $GITHUB_ENV
+          
+          echo "Installed: $PROV_NAME ($PROV_UUID) for Team: $PROV_TEAM"
+
       - name: Debug Keychain Identities
         run: |
           security find-identity -v -p codesigning build.keychain
@@ -99,7 +116,8 @@ jobs:
       - name: Build and Sign iOS IPA
         env:
           CODE_SIGN_IDENTITY: "Apple Distribution"
-          PROVISIONING_PROFILE: "c928ab27-ca43-439b-a34b-106c83c33f11" # UUID from profile
+          PROVISIONING_PROFILE: ${{ env.PROVISIONING_PROFILE_UUID }}
+          PROVISIONING_PROFILE_SPECIFIER: ${{ env.PROVISIONING_PROFILE_NAME }}
         run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 
       - name: Upload iOS IPA Artifact

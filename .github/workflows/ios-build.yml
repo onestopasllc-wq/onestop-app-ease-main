@@ -78,6 +78,15 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
+      - name: Inspect and Export Provisioning Profile Metadata
+        run: |
+          PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
+          security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
+          echo "PROVISIONING_PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /tmp/profile.plist)" >> $GITHUB_ENV
+        working-directory: onestop-mobile-app
+
       - name: Debug Keychain Identities
         run: |
           security find-identity -v -p codesigning build.keychain
@@ -87,7 +96,8 @@ jobs:
       - name: Build and Sign iOS IPA
         env:
           CODE_SIGN_IDENTITY: "Apple Distribution"
-          PROVISIONING_PROFILE: "c928ab27-ca43-439b-a34b-106c83c33f11"
+          PROVISIONING_PROFILE: ${{ env.PROVISIONING_PROFILE_UUID }}
+          PROVISIONING_PROFILE_SPECIFIER: ${{ env.PROVISIONING_PROFILE_NAME }}
         run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
         working-directory: onestop-mobile-app
 
