@@ -78,13 +78,22 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
-      - name: Inspect and Export Provisioning Profile Metadata
+      - name: Inspect and Self-Correct Provisioning Profile
         run: |
           PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
           security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
-          echo "PROVISIONING_PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)" >> $GITHUB_ENV
-          echo "PROVISIONING_PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)" >> $GITHUB_ENV
-          echo "PROVISIONING_PROFILE_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /tmp/profile.plist)" >> $GITHUB_ENV
+          
+          PROV_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)
+          PROV_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)
+          PROV_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /tmp/profile.plist)
+          
+          echo "PROVISIONING_PROFILE_NAME=$PROV_NAME" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_UUID=$PROV_UUID" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_TEAM=$PROV_TEAM" >> $GITHUB_ENV
+          
+          # Update ExportOptions in the mobile app directory
+          sed -i '' "s/OneStop_AppStore_Profile/$PROV_NAME/g" onestop-mobile-app/ios/ExportOptions.plist
+          echo "Updated ExportOptions.plist with profile name: $PROV_NAME"
         working-directory: onestop-mobile-app
 
       - name: Debug Keychain Identities

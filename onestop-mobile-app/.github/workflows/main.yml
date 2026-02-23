@@ -91,13 +91,12 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${PROVISION_BASE64}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
 
-      - name: Inspect and Export Provisioning Profile Metadata
+      - name: Inspect and Self-Correct Provisioning Profile
         run: |
           PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/OneStop.mobileprovision
-          # Dump the profile to a temporary plist
           security cms -D -i "$PROFILE_PATH" > /tmp/profile.plist
-
-          # Read values using PlistBuddy
+          
+          # Extract metadata
           PROV_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /tmp/profile.plist)
           PROV_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /tmp/profile.plist)
           PROV_TEAM=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" /tmp/profile.plist)
@@ -106,12 +105,12 @@ jobs:
           echo "PROVISIONING_PROFILE_UUID=$PROV_UUID" >> $GITHUB_ENV
           echo "PROVISIONING_PROFILE_TEAM=$PROV_TEAM" >> $GITHUB_ENV
           
-          echo "Installed: $PROV_NAME ($PROV_UUID) for Team: $PROV_TEAM"
-
-      - name: Debug Keychain Identities
-        run: |
-          security find-identity -v -p codesigning build.keychain
-          ls -l ~/Library/MobileDevice/Provisioning\ Profiles/
+          echo "Found Profile: $PROV_NAME ($PROV_UUID) for Team: $PROV_TEAM"
+          
+          # Self-correct ExportOptions.plist to match the profile's real name
+          # We replace 'OneStop_AppStore_Profile' with the $PROV_NAME found inside the profile
+          sed -i '' "s/OneStop_AppStore_Profile/$PROV_NAME/g" ios/ExportOptions.plist
+          echo "Updated ExportOptions.plist with profile name: $PROV_NAME"
 
       - name: Rebuild iOS IPA with Codesigning
         env:
