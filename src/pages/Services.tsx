@@ -129,6 +129,19 @@ const Services = () => {
         "Social media & stationary design assets",
       ],
     },
+    {
+      icon: <Boxes className="w-16 h-16" />,
+      title: "ERP System Development",
+      description: "Custom Enterprise Resource Planning solutions to streamline operations.",
+      details: [
+        "Custom workflow automation",
+        "Inventory & supply chain management",
+        "Financial & human resource modules",
+        "Real-time data analytics & reporting",
+        "Seamless system integrations",
+        "Scalable & secure architecture",
+      ],
+    },
   ];
 
   return (

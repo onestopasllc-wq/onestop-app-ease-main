@@ -9,9 +9,9 @@ interface SEOProps {
 }
 
 const SEO = ({
-  title = "OneStop Application Services LLC - We Make Applying Easy! 🎓💼",
-  description = "Professional application support for visa forms, college admissions, document evaluations, licensing boards, job applications, and business licenses. Expert guidance to simplify your application process.",
-  keywords = "onestopasllc, OneStopASLLC, OneStop AS LLC, application services, visa application help, college application support, document evaluation, licensing board applications, job application assistance, business license help, CGFNS application, nursing license application, professional application services",
+  title = "OneStop Application Services: Elite Digital Development & Global Application Support",
+  description = "Professional assistance for Website & Mobile Development, ERP Systems, and Logo Design, alongside expert guidance for Visa forms, College admissions, and Licensing. Engineered for seamless success.",
+  keywords = "OneStop Application Services, website development, mobile app development, ERP system, logo design, brand identity, visa application support, college application help, business license, licensing board support",
   canonical,
   ogImage = "/og-image.jpg"
 }: SEOProps) => {
@@ -92,7 +92,18 @@ const SEO = ({
         "@type": "Country",
         "name": "United States"
       },
-      "serviceType": ["Visa Application Support", "College Application Support", "Document Evaluation", "Licensing Board Applications", "Job Application Assistance", "Business License Support"]
+      "serviceType": [
+        "Website Development",
+        "Mobile App Development",
+        "ERP System Development",
+        "Logo & Brand Identity",
+        "Visa Application Support",
+        "College Application Support",
+        "Document Evaluation",
+        "Licensing Board Applications",
+        "Job Application Assistance",
+        "Business License Support"
+      ]
     });
   }, [fullTitle, description, keywords, canonicalUrl, siteUrl, ogImage]);
 

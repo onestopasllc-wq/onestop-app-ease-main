@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Settings, Ban, LogOut, ChevronLeft, Sparkles, MessageSquare, Car, ShieldCheck, HeartPulse, Home, Globe } from "lucide-react";
+import { LayoutDashboard, Calendar, Settings, Ban, LogOut, ChevronLeft, Sparkles, MessageSquare, Car, ShieldCheck, HeartPulse, Home, Globe, Briefcase } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -22,11 +22,9 @@ const menuItems = [
   { title: "Appointments", url: "#appointments", icon: Calendar },
   { title: "Promotional Popups", url: "#popups", icon: Sparkles },
   { title: "Testimonials", url: "#testimonials", icon: MessageSquare },
-  { title: "Dealerships", url: "#dealerships", icon: Car },
-  { title: "Insurance", url: "#insurance", icon: ShieldCheck },
-  { title: "Health Ins.", url: "#health-insurance", icon: HeartPulse },
   { title: "Rentals", url: "#rentals", icon: Home },
-  { title: "Community Services", url: "#community-services", icon: Globe },
+  { title: "More", url: "#community-services", icon: Globe },
+  { title: "Job Posts", url: "#job-posts", icon: Briefcase },
   { title: "Availability", url: "#availability", icon: Settings },
   { title: "Blocked Dates", url: "#blocked", icon: Ban },
 ];

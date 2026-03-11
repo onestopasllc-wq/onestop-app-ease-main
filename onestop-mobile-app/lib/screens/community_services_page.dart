@@ -31,11 +31,24 @@ class _CommunityServicesPageState extends State<CommunityServicesPage> {
     "Hotels & Lodging",
     "Tax Preparation & Accounting",
     "Finance & Business Services",
-    "Childcare Services",
     "Transportation Services",
     "Tech Solutions",
-    "Other Community Services",
-    "Short term training"
+    "Gym",
+    "Haircut / Barber Shop",
+    "Morocco Base (Moroccan bath)",
+    "Spa / Massage",
+    "Shopping",
+    "Lawyer",
+    "Photographer",
+    "Maintenance (Electrician / HVAC Technician)",
+    "Travel Agent",
+    "Driving School",
+    "Money Transfer / Bank",
+    "Decor & Catering / Cake",
+    "Babysitter / Nanny",
+    "Government Websites & Mobile Apps",
+    "Short term training",
+    "Other"
   ];
 
   @override

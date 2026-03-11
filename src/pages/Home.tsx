@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, GraduationCap, Briefcase, Globe, UserCheck, Building2, ArrowRight, CheckCircle2 } from "lucide-react";
+import { FileText, GraduationCap, Briefcase, Globe, UserCheck, Building2, ArrowRight, CheckCircle2, Boxes } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -56,7 +56,7 @@ const Home = () => {
       icon: <Building2 className="w-12 h-12" />,
       title: "Business License Application Support",
       description:
-        "tComplete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
+        "Complete guidance for local, state, and federal business licensing requirements. We assist you in preparing forms, gathering documents, and submitting regulatory applications accurately.",
     },
   ];
 
@@ -110,7 +110,7 @@ const Home = () => {
             alt="Professional application services"
             className="w-full h-full object-cover"
           />
-
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/40 to-transparent" />
         </div>
 
         {/* Content */}
@@ -125,12 +125,13 @@ const Home = () => {
                 <span className="text-white font-semibold">Trusted by Thousands</span>
               </div>
 
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white leading-tight">
-                We Make Applying Easy! 🎓💼
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white leading-tight">
+                Elite Digital Development & Global Application Support
+                {/* 🎓🌐 */}
               </h1>
 
-              <p className="text-xl md:text-2xl mb-8 text-white/95 leading-relaxed">
-                Helping students and professionals simplify every application process with expert guidance and personalized support.
+              <p className="text-lg md:text-xl mb-8 text-white/95 leading-relaxed">
+                Empowering your professional journey through high-performance Website, Mobile, and ERP development, integrated with expert guidance for Visa, Education, and Licensing applications. Engineered for success, designed for you.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -213,7 +214,7 @@ const Home = () => {
               </Card>
               <Card className="shadow-card hover:shadow-hover transition-smooth mt-8">
                 <CardContent className="pt-6 text-center">
-                  <div className="text-4xl font-bold text-secondary mb-2">6</div>
+                  <div className="text-4xl font-bold text-secondary mb-2">10+</div>
                   <p className="text-muted-foreground">Service Areas</p>
                 </CardContent>
               </Card>

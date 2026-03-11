@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // Types for Job Data
 export interface JobPosition {
@@ -130,7 +131,7 @@ const MOCK_JOBS: JobPosition[] = [
       }
     }
   },
-   {
+  {
     MatchedObjectDescriptor: {
       PositionID: "3",
       PositionTitle: "Paralegal Specialist",
@@ -208,23 +209,23 @@ export const fetchJobs = async (filters: JobFilters) => {
     console.warn("No USAJobs API Key found. Using mock data.");
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Simple client-side filtering for mock data
     let filteredJobs = [...MOCK_JOBS];
-    
+
     if (filters.keyword) {
       const lowerKeyword = filters.keyword.toLowerCase();
-      filteredJobs = filteredJobs.filter(job => 
+      filteredJobs = filteredJobs.filter(job =>
         job.MatchedObjectDescriptor.PositionTitle.toLowerCase().includes(lowerKeyword) ||
         job.MatchedObjectDescriptor.OrganizationName.toLowerCase().includes(lowerKeyword)
       );
     }
-    
+
     if (filters.location) {
-       const lowerLoc = filters.location.toLowerCase();
-       filteredJobs = filteredJobs.filter(job => 
+      const lowerLoc = filters.location.toLowerCase();
+      filteredJobs = filteredJobs.filter(job =>
         job.MatchedObjectDescriptor.PositionLocation.some(loc => loc.LocationName.toLowerCase().includes(lowerLoc))
-       );
+      );
     }
 
     return {
@@ -237,15 +238,15 @@ export const fetchJobs = async (filters: JobFilters) => {
   }
 
   const params = new URLSearchParams();
-  
+
   // Basic filters
   if (filters.keyword) params.append("Keyword", filters.keyword);
   if (filters.location) params.append("LocationName", filters.location);
-  
+
   // Pagination
   if (filters.page) params.append("Page", filters.page.toString());
   params.append("ResultsPerPage", "10");
-  
+
   // US Citizenship requirement is implicit for most federal jobs, but we can enforce it if needed
   // params.append("WhoMayApply", "Citizens"); 
 
@@ -271,4 +272,70 @@ export const useJobs = (filters: JobFilters) => {
     queryFn: () => fetchJobs(filters),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+};
+
+export const useAdminJobs = () => {
+  return useQuery({
+    queryKey: ["admin-jobs"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("admin_jobs")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const mapAdminJobToPosition = (adminJob: any): JobPosition => {
+  return {
+    MatchedObjectDescriptor: {
+      PositionID: adminJob.id,
+      PositionTitle: adminJob.title,
+      PositionURI: adminJob.apply_url || "#",
+      ApplyURI: [adminJob.apply_url || "#"],
+      PositionLocation: [
+        {
+          LocationName: adminJob.location,
+          CountryCode: "US",
+          CountrySubDivisionCode: "",
+          CityName: adminJob.location,
+        },
+      ],
+      OrganizationName: adminJob.organization,
+      DepartmentName: adminJob.organization,
+      JobCategory: [],
+      PositionSchedule: [{ Name: adminJob.job_type, Code: "" }],
+      PositionOfferingType: [],
+      PositionRemuneration: [
+        {
+          MinimumRange: adminJob.salary_min?.toString() || "0",
+          MaximumRange: adminJob.salary_max?.toString() || "0",
+          RateIntervalCode: adminJob.salary_interval || "PA",
+        },
+      ],
+      PositionStartDate: adminJob.created_at,
+      PositionEndDate: adminJob.close_date || "",
+      PublicationStartDate: adminJob.created_at,
+      ApplicationCloseDate: adminJob.close_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      UserArea: {
+        Details: {
+          JobSummary: adminJob.description || "",
+          MajorDuties: [],
+          Education: "",
+          Requirements: "",
+          Evaluations: "",
+          HowToApply: "Click Apply Now to proceed.",
+          WhatToExpectNext: "",
+          RequiredDocuments: "",
+          Benefits: "",
+          OtherInformation: "",
+        },
+      },
+    },
+  };
 };

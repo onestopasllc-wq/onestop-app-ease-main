@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useJobs, JobFilters as FilterTypes } from "@/lib/jobApi";
+import { useJobs, JobFilters as FilterTypes, useAdminJobs, mapAdminJobToPosition } from "@/lib/jobApi";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -20,6 +20,20 @@ const Job = () => {
     });
 
     const { data, isLoading, isError, error, refetch } = useJobs(filters);
+    const { data: adminJobs, isLoading: isLoadingAdmin } = useAdminJobs();
+
+    // Map admin jobs to Position structure and filter by keyword if search is active
+    const filteredAdminJobs = (adminJobs || [])
+        .filter(job => {
+            if (!filters.keyword) return true;
+            const kw = filters.keyword.toLowerCase();
+            return job.title.toLowerCase().includes(kw) ||
+                job.organization.toLowerCase().includes(kw) ||
+                job.location.toLowerCase().includes(kw);
+        })
+        .map(mapAdminJobToPosition);
+
+    const allJobsCount = (data?.SearchResult?.SearchResultItems?.length || 0) + filteredAdminJobs.length;
 
     // Scroll to top when page changes
     useEffect(() => {
@@ -128,11 +142,17 @@ const Job = () => {
                                 <>
                                     <div className="flex justify-between items-center mb-6">
                                         <p className="text-muted-foreground">
-                                            Showing <span className="font-semibold text-primary">{data?.SearchResult?.SearchResultItems?.length}</span> jobs
+                                            Showing <span className="font-semibold text-primary">{allJobsCount}</span> jobs
                                         </p>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                                        {/* Display Admin Jobs first */}
+                                        {filteredAdminJobs.map((job: any) => (
+                                            <JobCard key={job.MatchedObjectDescriptor.PositionID} job={job} />
+                                        ))}
+
+                                        {/* Display USAJobs results */}
                                         {data?.SearchResult?.SearchResultItems?.map((job: any) => (
                                             <JobCard key={job.MatchedObjectDescriptor.PositionID} job={job} />
                                         ))}

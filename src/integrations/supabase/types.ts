@@ -180,6 +180,57 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_jobs: {
+        Row: {
+          id: string
+          title: string
+          organization: string
+          location: string
+          salary_min: number | null
+          salary_max: number | null
+          salary_interval: string | null
+          job_type: string | null
+          description: string | null
+          apply_url: string | null
+          close_date: string | null
+          is_active: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          organization: string
+          location: string
+          salary_min?: number | null
+          salary_max?: number | null
+          salary_interval?: string | null
+          job_type?: string | null
+          description?: string | null
+          apply_url?: string | null
+          close_date?: string | null
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          organization?: string
+          location?: string
+          salary_min?: number | null
+          salary_max?: number | null
+          salary_interval?: string | null
+          job_type?: string | null
+          description?: string | null
+          apply_url?: string | null
+          close_date?: string | null
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       testimonials: {
         Row: {
           id: string

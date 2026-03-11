@@ -124,7 +124,7 @@ const Rentals = () => {
                         transition={{ duration: 0.5, delay: 0.3 }}
                     >
                         <Button asChild size="lg" className="shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
-                            <Link to={isAuthenticated ? "/dashboard/rentals/new" : "/login"}>
+                            <Link to={isAuthenticated ? "/dashboard/rentals/new" : "/login?redirect=/dashboard/rentals/new"}>
                                 <Plus className="mr-2 h-5 w-5" /> Post a Rental ($25)
                             </Link>
                         </Button>

@@ -26,11 +26,8 @@ const Navbar = () => {
   ];
 
   const moreLinks = [
-    { to: "/dealerships", label: "Auto Dealers" },
-    { to: "/insurance", label: "Insurance" },
-    { to: "/health-insurance", label: "Health Insurance" },
     { to: "/rentals", label: "Rentals" },
-    { to: "/community-services", label: "Community Services" },
+    { to: "/community-services", label: "More" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

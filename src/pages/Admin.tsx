@@ -42,7 +42,8 @@ import {
   ShieldCheck,
   HeartPulse,
   Home,
-  Globe
+  Globe,
+  Briefcase
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -54,12 +55,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { PromotionalPopupsAdmin } from "@/components/PromotionalPopupsAdmin";
 import { TestimonialAdmin } from "@/components/TestimonialAdmin";
-import { DealershipAdmin } from "@/components/DealershipAdmin";
-import { InsuranceAdmin } from "@/components/InsuranceAdmin";
-import { HealthInsuranceAdmin } from "@/components/HealthInsuranceAdmin";
 import { RentalAdmin } from "@/components/RentalAdmin";
 import { AdminRentalsCRUD } from "@/components/AdminRentalsCRUD";
 import { CommunityServicesAdmin } from "@/components/CommunityServicesAdmin";
+import { JobAdmin } from "@/components/JobAdmin";
 import { z } from "zod";
 
 // Input validation schemas
@@ -1285,71 +1284,7 @@ const Admin = () => {
                 </Card>
               </motion.div>
 
-              {/* Dealerships Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.29 }}
-                id="dealerships"
-              >
-                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3 pointer-events-none" />
-                  <CardHeader className="relative z-10">
-                    <CardTitle className="text-foreground flex items-center gap-2">
-                      <Car className="h-5 w-5 text-primary" />
-                      Dealership Partners
-                    </CardTitle>
-                    <CardDescription>Manage car dealership partnerships</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <DealershipAdmin />
-                  </CardContent>
-                </Card>
-              </motion.div>
 
-              {/* Insurance Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                id="insurance"
-              >
-                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/3 via-transparent to-primary/3 pointer-events-none" />
-                  <CardHeader className="relative z-10">
-                    <CardTitle className="text-foreground flex items-center gap-2">
-                      <ShieldCheck className="h-5 w-5 text-secondary" />
-                      Insurance Partners
-                    </CardTitle>
-                    <CardDescription>Manage car insurance partnerships</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <InsuranceAdmin />
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Health Insurance Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                id="health-insurance"
-              >
-                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
-                  <CardHeader className="relative z-10">
-                    <CardTitle className="text-foreground flex items-center gap-2">
-                      <HeartPulse className="h-5 w-5 text-teal-500" />
-                      Health Insurance Partners
-                    </CardTitle>
-                    <CardDescription>Manage health insurance partnerships</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <HealthInsuranceAdmin />
-                  </CardContent>
-                </Card>
-              </motion.div>
 
               {/* Rentals Section */}
               <motion.div
@@ -1386,12 +1321,34 @@ const Admin = () => {
                   <CardHeader className="relative z-10">
                     <CardTitle className="text-foreground flex items-center gap-2">
                       <Globe className="h-5 w-5 text-primary" />
-                      Community Services & Classifieds
+                      More & Classifieds
                     </CardTitle>
-                    <CardDescription>Manage local directory and service listings</CardDescription>
+                    <CardDescription>Manage more local directory and service listings</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <CommunityServicesAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Job Posts Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.32 }}
+                id="job-posts"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl mt-8">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 via-transparent to-primary/5 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                      <Briefcase className="h-5 w-5 text-secondary" />
+                      Job Posts Management
+                    </CardTitle>
+                    <CardDescription>Create and manage custom job listings</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <JobAdmin />
                   </CardContent>
                 </Card>
               </motion.div>

@@ -9,9 +9,12 @@ import {
     Loader2, Search, Globe, Phone, Mail, MapPin, ExternalLink,
     GraduationCap, Building2, Car, HeartPulse, ShoppingBag,
     Utensils, Hotel, Calculator, DollarSign, Baby, Truck,
-    Laptop, Megaphone, Info, Star, ChevronRight, ShieldCheck,
-    Stethoscope, Home, Tag, Key, Luggage, Wallet, Users, HelpCircle
+    Laptop, Megaphone, Info, Star, ChevronRight, ChevronLeft, ShieldCheck,
+    Stethoscope, Home, Tag, Key, Luggage, Wallet, Users, HelpCircle,
+    Dumbbell, Scissors, Bath, Sparkles, Scale, Camera, Wrench, Plane,
+    IdCard, Landmark, Cake, Layout
 } from "lucide-react";
+import { useRef } from "react";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -43,11 +46,24 @@ const CATEGORY_ICONS: Record<string, any> = {
     "Hotels & Lodging": Hotel,
     "Tax Preparation & Accounting": Calculator,
     "Finance & Business Services": Wallet,
-    "Childcare Services": Baby,
     "Transportation Services": Truck,
     "Tech Solutions": Laptop,
+    "Gym": Dumbbell,
+    "Haircut / Barber Shop": Scissors,
+    "Morocco Base (Moroccan bath)": Bath,
+    "Spa / Massage": Sparkles,
+    "Shopping": ShoppingBag,
+    "Lawyer": Scale,
+    "Photographer": Camera,
+    "Maintenance (Electrician / HVAC Technician)": Wrench,
+    "Travel Agent": Plane,
+    "Driving School": IdCard,
+    "Money Transfer / Bank": Landmark,
+    "Decor & Catering / Cake": Cake,
+    "Babysitter / Nanny": Baby,
+    "Government Websites & Mobile Apps": Layout,
     "Short term training": GraduationCap,
-    "Other Community Services": Megaphone
+    "Other": Megaphone
 };
 
 const CommunityServices = () => {
@@ -56,9 +72,38 @@ const CommunityServices = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [activeCategory, setActiveCategory] = useState("all");
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [showRightArrow, setShowRightArrow] = useState(true);
+    const categoryRef = useRef<HTMLDivElement>(null);
+
+    const updateArrowVisibility = () => {
+        if (categoryRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = categoryRef.current;
+            setShowLeftArrow(scrollLeft > 10);
+            setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+        }
+    };
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (categoryRef.current) {
+            const scrollAmount = 300;
+            const newScrollLeft = direction === 'left'
+                ? categoryRef.current.scrollLeft - scrollAmount
+                : categoryRef.current.scrollLeft + scrollAmount;
+
+            categoryRef.current.scrollTo({
+                left: newScrollLeft,
+                behavior: 'smooth'
+            });
+        }
+    };
 
     useEffect(() => {
         fetchServices();
+        // Initial visibility check and add resize listener
+        updateArrowVisibility();
+        window.addEventListener('resize', updateArrowVisibility);
+        return () => window.removeEventListener('resize', updateArrowVisibility);
     }, []);
 
     const formatUrl = (url: string | null) => {
@@ -162,13 +207,37 @@ const CommunityServices = () => {
                     </div>
                 </motion.div>
 
-                {/* Category Navigation - No redundant icons */}
-                <div className="max-w-7xl mx-auto mb-12">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+                {/* Category Navigation - Enhanced with Scroll Arrows */}
+                <div className="max-w-7xl mx-auto mb-12 flex items-center gap-4 group/nav">
+                    {/* Left Arrow */}
+                    <div className="relative h-12 w-12 flex-shrink-0 hidden md:flex items-center justify-center">
+                        <AnimatePresence>
+                            {showLeftArrow && (
+                                <motion.button
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 10 }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="absolute inset-0 z-20 rounded-full bg-white shadow-lg border border-primary/20 text-primary flex items-center justify-center transition-all hover:bg-primary hover:text-white"
+                                    onClick={() => scroll('left')}
+                                    aria-label="Scroll left"
+                                >
+                                    <ChevronLeft size={20} strokeWidth={3} />
+                                </motion.button>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <div
+                        ref={categoryRef}
+                        onScroll={updateArrowVisibility}
+                        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-1 py-1"
+                    >
                         <Button
                             variant={activeCategory === "all" ? "default" : "outline"}
                             onClick={() => setActiveCategory("all")}
-                            className={`rounded-full px-6 py-2 h-auto whitespace-nowrap font-medium transition-all ${activeCategory === "all" ? "bg-primary text-primary-foreground" : "bg-white/40 border-primary/10 hover:bg-primary/5"
+                            className={`rounded-full px-6 py-2 h-10 whitespace-nowrap font-medium transition-all ${activeCategory === "all" ? "bg-primary text-primary-foreground" : "bg-white/40 border-primary/10 hover:bg-primary/5"
                                 }`}
                         >
                             All Services
@@ -179,12 +248,32 @@ const CommunityServices = () => {
                                 key={cat}
                                 variant={activeCategory === cat ? "default" : "outline"}
                                 onClick={() => setActiveCategory(cat)}
-                                className={`rounded-full px-6 py-2 h-auto whitespace-nowrap font-medium transition-all ${activeCategory === cat ? "bg-primary text-primary-foreground" : "bg-white/40 border-primary/10 hover:bg-primary/5"
+                                className={`rounded-full px-6 py-2 h-10 whitespace-nowrap font-medium transition-all ${activeCategory === cat ? "bg-primary text-primary-foreground" : "bg-white/40 border-primary/10 hover:bg-primary/5"
                                     }`}
                             >
                                 {cat}
                             </Button>
                         ))}
+                    </div>
+
+                    {/* Right Arrow */}
+                    <div className="relative h-12 w-12 flex-shrink-0 hidden md:flex items-center justify-center">
+                        <AnimatePresence>
+                            {showRightArrow && (
+                                <motion.button
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="absolute inset-0 z-20 rounded-full bg-white shadow-lg border border-primary/20 text-primary flex items-center justify-center transition-all hover:bg-primary hover:text-white"
+                                    onClick={() => scroll('right')}
+                                    aria-label="Scroll right"
+                                >
+                                    <ChevronRight size={20} strokeWidth={3} />
+                                </motion.button>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
 
