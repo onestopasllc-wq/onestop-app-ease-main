@@ -24,6 +24,7 @@ import UserDashboard from "./pages/dashboard/UserDashboard";
 import UserListings from "./pages/dashboard/UserListings";
 import UserProfile from "./pages/dashboard/UserProfile";
 import CommunityServices from "./pages/CommunityServices";
+import EventRegistration from "./pages/EventRegistration";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
@@ -55,6 +56,7 @@ const App = () => (
         <Route path="/health-insurance" element={<HealthInsurance />} />
         <Route path="/rentals" element={<Rentals />} />
         <Route path="/community-services" element={<CommunityServices />} />
+        <Route path="/event-registration" element={<EventRegistration />} />
         <Route path="/privacy" element={<Privacy />} />
 
 

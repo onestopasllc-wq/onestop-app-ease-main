@@ -146,8 +146,8 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
     const chunkKeys = Object.keys(metadata)
       .filter(key => key.startsWith('data_')) // Matches new format
       .sort((a, b) => {
-        const numA = parseInt(a.split('_')[1]);
-        const numB = parseInt(b.split('_')[1]);
+        const numA = parseInt(a.split('_')[2]);
+        const numB = parseInt(b.split('_')[2]);
         return numA - numB;
       });
 
@@ -168,6 +168,12 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
     // Check for Rental Listing Type
     if (metadata.type === 'rental_listing') {
       await handleRentalListing(session, supabaseAdmin, reassembledData);
+      return;
+    }
+
+    // Check for Event Registration Type
+    if (metadata.type === 'event_registration') {
+      await handleEventRegistration(session, supabaseAdmin, reassembledData);
       return;
     }
 
@@ -342,6 +348,53 @@ async function handleRentalListing(session: any, supabaseAdmin: any, reassembled
     console.log(`✅ Rental listing created ID: ${newListing.id}`);
   } catch (error: any) {
     console.error('❌ Error handling rental listing:', error);
+    throw error;
+  }
+}
+
+async function handleEventRegistration(session: any, supabaseAdmin: any, reassembledData: any) {
+  console.log('🎟️ Processing Event Registration Payment:', session.id);
+
+  try {
+    const metadata = session.metadata || {};
+    let registrationData = reassembledData;
+
+    if (!registrationData && metadata.registration_data) {
+      try {
+        registrationData = JSON.parse(metadata.registration_data);
+      } catch (e) {
+        console.error('Fallback registration_data parse failed');
+      }
+    }
+
+    if (!registrationData) {
+      throw new Error("No registration data found in metadata");
+    }
+
+    console.log('Creating registration for:', registrationData.full_name);
+
+    const { data: newRegistration, error: insertError } = await supabaseAdmin
+      .from('event_registrations')
+      .insert({
+        full_name: registrationData.full_name,
+        phone_number: registrationData.phone_number,
+        areas_of_interest: registrationData.areas_of_interest || [],
+        other_interest: registrationData.other_interest || null,
+        city_state: registrationData.city_state,
+        payment_status: 'paid',
+        stripe_session_id: session.id
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('❌ Failed to insert registration:', insertError);
+      throw insertError;
+    }
+
+    console.log(`✅ Event registration created ID: ${newRegistration.id}`);
+  } catch (error: any) {
+    console.error('❌ Error handling event registration:', error);
     throw error;
   }
 }

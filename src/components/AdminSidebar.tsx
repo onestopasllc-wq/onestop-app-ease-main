@@ -23,6 +23,7 @@ const menuItems = [
   { title: "Promotional Popups", url: "#popups", icon: Sparkles },
   { title: "Testimonials", url: "#testimonials", icon: MessageSquare },
   { title: "Rentals", url: "#rentals", icon: Home },
+  { title: "Event Reg", url: "#event-registrations", icon: Briefcase },
   { title: "More", url: "#community-services", icon: Globe },
   { title: "Job Posts", url: "#job-posts", icon: Briefcase },
   { title: "Availability", url: "#availability", icon: Settings },

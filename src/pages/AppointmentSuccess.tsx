@@ -8,6 +8,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { EventTicket } from '@/components/EventTicket';
+import { Download } from 'lucide-react';
 
 export default function AppointmentSuccess() {
   const [searchParams] = useSearchParams();
@@ -17,6 +19,7 @@ export default function AppointmentSuccess() {
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
+    const type = searchParams.get('type');
 
     if (!sessionId) {
       setError('No session ID provided');
@@ -24,8 +27,42 @@ export default function AppointmentSuccess() {
       return;
     }
 
-    fetchAppointment(sessionId);
+    if (type === 'event') {
+      fetchEventRegistration(sessionId);
+    } else {
+      fetchAppointment(sessionId);
+    }
   }, [searchParams]);
+
+  const fetchEventRegistration = async (sessionId: string) => {
+    try {
+      const maxAttempts = 15;
+      let attempts = 0;
+
+      while (attempts < maxAttempts) {
+        const { data, error } = await supabase
+          .from('event_registrations')
+          .select('*')
+          .eq('stripe_session_id', sessionId)
+          .maybeSingle();
+
+        if (data) {
+          setAppointment({ ...data, isEvent: true });
+          setLoading(false);
+          return;
+        }
+
+        if (error) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+      }
+      setError('Registration confirmed, but processing. Check your email or try again.');
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   const fetchAppointment = async (sessionId: string) => {
     try {
@@ -169,13 +206,37 @@ export default function AppointmentSuccess() {
               >
                 <CheckCircle2 className="w-12 h-12 text-green-600" />
               </motion.div>
-              <CardTitle className="text-3xl text-green-700 mb-2">Payment Successful!</CardTitle>
+              <CardTitle className="text-3xl text-green-700 mb-2">
+                Thank you, {appointment.full_name?.split(' ')[0]}!
+              </CardTitle>
               <p className="text-lg text-muted-foreground">
-                Your appointment has been confirmed
+                Payment successful and {appointment.isEvent ? 'registration' : 'appointment'} confirmed
               </p>
             </CardHeader>
             <CardContent className="space-y-8">
-              {/* Appointment Details */}
+              {appointment.isEvent ? (
+                <div className="space-y-6">
+                  <div className="print:hidden">
+                    <EventTicket registration={appointment} />
+                  </div>
+                  <div className="hidden print:block">
+                    <EventTicket registration={appointment} />
+                  </div>
+                  
+                  <div className="flex justify-center pt-4 print:hidden">
+                    <Button 
+                      onClick={() => window.print()} 
+                      className="gap-2 bg-slate-900 hover:bg-slate-800"
+                      size="lg"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Professional Ticket
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Appointment Details */}
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-6 space-y-4 border border-primary/20">
                 <h3 className="font-semibold text-lg text-primary mb-4">Appointment Details</h3>
 
@@ -245,7 +306,7 @@ export default function AppointmentSuccess() {
               </Alert>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 print:hidden">
                 <Button
                   className="flex-1"
                   size="lg"
@@ -267,7 +328,9 @@ export default function AppointmentSuccess() {
                     Book Another
                   </Link>
                 </Button>
-              </div>
+                </div>
+              </>
+            )}
             </CardContent>
           </Card>
         </motion.div>
