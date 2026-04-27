@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Eye, Loader2, Trash2, User, Phone, MapPin, Calendar } from "lucide-react";
+import { Eye, Loader2, Trash2, User, Phone, MapPin, Calendar, Mail as MailIcon } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -27,6 +27,7 @@ import {
 interface EventRegistration {
     id: string;
     full_name: string;
+    email: string;
     phone_number: string;
     areas_of_interest: string[];
     other_interest: string | null;
@@ -112,6 +113,9 @@ export const EventRegistrationAdmin = () => {
                                 <div>
                                     <h4 className="font-medium">{reg.full_name}</h4>
                                     <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                        <MailIcon size={12} className="shrink-0" /> {reg.email}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
                                         <Phone size={12} /> {reg.phone_number}
                                         <span className="hidden sm:inline">•</span>
                                         <MapPin size={12} /> {reg.city_state}
@@ -157,6 +161,10 @@ export const EventRegistrationAdmin = () => {
                                     <div className="space-y-1">
                                         <p className="text-muted-foreground font-medium">Phone</p>
                                         <p>{selectedReg.phone_number}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-muted-foreground font-medium">Email</p>
+                                        <p className="break-all">{selectedReg.email}</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-muted-foreground font-medium">Location</p>
