@@ -34,10 +34,7 @@ serve(async (req) => {
         error: "Invalid JSON in request body"
       }), {
         status: 400,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
@@ -47,14 +44,13 @@ serve(async (req) => {
         error: "Registration data is required"
       }), {
         status: 400,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    console.log("Stripe key exists:", !!stripeSecretKey);
+
     if (!stripeSecretKey) {
       throw new Error("STRIPE_SECRET_KEY environment variable is not set");
     }
@@ -63,7 +59,8 @@ serve(async (req) => {
       apiVersion: "2024-11-20.acacia"
     });
 
-    const origin = req.headers.get("origin") || "http://localhost:8080";
+    const origin = req.headers.get("origin") || "https://onestopasllc.com";
+    console.log("Origin:", origin);
 
     console.log("Creating Stripe checkout session for event registration...");
 
@@ -76,7 +73,7 @@ serve(async (req) => {
               name: "Event Registration Fee",
               description: "Registration for OneStop Application Services Event"
             },
-            unit_amount: 10 // $0.10 for testing (originally 1500)
+            unit_amount: 50 // $0.50 for testing (Stripe minimum is usually $0.50)
           },
           quantity: 1
         }
@@ -100,10 +97,7 @@ serve(async (req) => {
       url: session.url,
       sessionId: session.id
     }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200
     });
 
@@ -113,10 +107,7 @@ serve(async (req) => {
       error: error.message
     }), {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
