@@ -76,18 +76,20 @@ serve(async (req) => {
               name: "Event Registration Fee",
               description: "Registration for OneStop Application Services Event"
             },
-            unit_amount: 1500 // $15
+            unit_amount: 10 // $0.10 for testing (originally 1500)
           },
           quantity: 1
         }
       ],
       mode: "payment",
+      customer_email: registrationData.email,
       success_url: `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}&type=event`,
       cancel_url: `${origin}/event-registration`,
       metadata: {
         type: "event_registration",
         registration_data: JSON.stringify(registrationData),
         customer_name: registrationData.full_name,
+        customer_email: registrationData.email,
         customer_phone: registrationData.phone_number,
       },
     });

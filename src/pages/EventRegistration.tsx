@@ -25,6 +25,7 @@ const interestAreas = [
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Invalid email address").max(255),
   phoneNumber: z.string().min(5, "Please enter a valid phone number"),
   areasOfInterest: z.array(z.string()).min(1, "Please select at least one area of interest"),
   otherInterest: z.string().max(100).optional(),
@@ -40,6 +41,7 @@ export default function EventRegistration() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
+      email: "",
       phoneNumber: "",
       areasOfInterest: [],
       otherInterest: "",
@@ -57,6 +59,7 @@ export default function EventRegistration() {
           body: {
             registrationData: {
               full_name: data.fullName,
+              email: data.email,
               phone_number: data.phoneNumber,
               areas_of_interest: data.areasOfInterest,
               other_interest: data.otherInterest || null,
@@ -126,6 +129,23 @@ export default function EventRegistration() {
                             </FormLabel>
                             <FormControl>
                               <Input placeholder="John Doe" className="h-11" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Email Field */}
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-primary" /> Email Address
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="john@example.com" className="h-11" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -231,7 +251,7 @@ export default function EventRegistration() {
                           </p>
                           <p className="text-sm text-muted-foreground">Visa, MasterCard accepted</p>
                         </div>
-                        <span className="text-2xl font-bold text-primary">$15</span>
+                        <span className="text-2xl font-bold text-primary">$0.10</span>
                       </div>
 
                       <Button
@@ -248,7 +268,7 @@ export default function EventRegistration() {
                         ) : (
                           <>
                             <CheckCircle2 className="mr-2 h-5 w-5" />
-                            Register Now - $15
+                            Register Now - $0.10
                           </>
                         )}
                       </Button>

@@ -377,6 +377,7 @@ async function handleEventRegistration(session: any, supabaseAdmin: any, reassem
       .from('event_registrations')
       .insert({
         full_name: registrationData.full_name,
+        email: registrationData.email,
         phone_number: registrationData.phone_number,
         areas_of_interest: registrationData.areas_of_interest || [],
         other_interest: registrationData.other_interest || null,
@@ -393,6 +394,19 @@ async function handleEventRegistration(session: any, supabaseAdmin: any, reassem
     }
 
     console.log(`✅ Event registration created ID: ${newRegistration.id}`);
+
+    // Send confirmation email
+    await supabaseAdmin.functions.invoke('send-confirmation-email', {
+      body: {
+        type: 'event_registration',
+        to: registrationData.email,
+        name: registrationData.full_name,
+        areasOfInterest: registrationData.areas_of_interest,
+        cityState: registrationData.city_state,
+        phoneNumber: registrationData.phone_number,
+        sessionId: session.id
+      }
+    }).catch((err: any) => console.error('Error triggering event confirmation email:', err));
   } catch (error: any) {
     console.error('❌ Error handling event registration:', error);
     throw error;
