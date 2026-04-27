@@ -22,7 +22,7 @@ serve(async (req) => {
 
     await resend.emails.send({
       from: "OneStop Contact Form <onboarding@resend.dev>",
-      to: ["onestopapplicationservicesllc@gmail.com"],
+      to: ["Info@onestopasllc.com"],
       replyTo: email,
       subject: `New Contact: ${name}`,
       html: `<p><strong>From:</strong> ${name} (${email})</p><p><strong>Message:</strong></p><p>${message}</p>`,

@@ -100,7 +100,7 @@ const Privacy = () => {
                             </p>
                             <div className="mt-4 p-6 bg-secondary/5 rounded-2xl border border-secondary/10">
                                 <p className="font-bold text-primary">OneStop Application Services LLC</p>
-                                <p>Email: onestopapplicationservicesllc@gmail.com</p>
+                                <p>Email: Info@onestopasllc.com</p>
                                 <p>Phone: +1 (571) 660-4984</p>
                                 <p>Location: Woodbridge, VA (Virtual Office)</p>
                             </div>

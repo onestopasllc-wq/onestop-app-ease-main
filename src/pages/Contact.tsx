@@ -209,10 +209,10 @@ const Contact = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-lg mb-2 text-primary">Email</h3>
                         <a
-                          href="mailto:onestopapplicationservicesllc@gmail.com"
+                          href="mailto:Info@onestopasllc.com"
                           className="text-muted-foreground hover:text-secondary transition-smooth break-words text-sm sm:text-base"
                         >
-                          onestopapplicationservicesllc@gmail.com
+                          Info@onestopasllc.com
                         </a>
                         <p className="text-sm text-muted-foreground mt-2">
                           We typically respond within 24 hours

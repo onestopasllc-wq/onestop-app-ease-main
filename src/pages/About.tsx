@@ -217,17 +217,17 @@ const About = () => {
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
               Ready to simplify your application process? Get in touch with us today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="tel:+15716604984" className="text-white text-lg font-semibold hover:text-secondary transition-smooth">
-                📞 +1 (571) 660-4984
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <a href="tel:+15716604984" className="text-white text-lg font-semibold hover:text-secondary transition-smooth flex items-center gap-2">
+                +1 (571) 660-4984
               </a>
               <span className="text-white/50 hidden sm:inline">|</span>
-              <a href="mailto:onestopapplicationservicesllc@gmail.com" className="text-white text-lg font-semibold hover:text-secondary transition-smooth">
-                📧 Email Us
+              <a href="mailto:Info@onestopasllc.com" className="text-white text-lg font-semibold hover:text-secondary transition-smooth flex items-center gap-2">
+                Email Us
               </a>
               <span className="text-white/50 hidden sm:inline">|</span>
-              <a href="https://t.me/OneStop_Application_Services_LLC" target="_blank" rel="noopener noreferrer" className="text-white text-lg font-semibold hover:text-secondary transition-smooth">
-                💬 Telegram
+              <a href="https://t.me/OneStop_Application_Services_LLC" target="_blank" rel="noopener noreferrer" className="text-white text-lg font-semibold hover:text-secondary transition-smooth flex items-center gap-2">
+                Telegram
               </a>
             </div>
           </motion.div>

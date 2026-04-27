@@ -85,7 +85,7 @@ const SEO = ({
         "addressCountry": "US"
       },
       "telephone": "+1-571-660-4984",
-      "email": "onestopapplicationservicesllc@gmail.com",
+      "email": "Info@onestopasllc.com",
       "url": siteUrl,
       "priceRange": "$$",
       "areaServed": {

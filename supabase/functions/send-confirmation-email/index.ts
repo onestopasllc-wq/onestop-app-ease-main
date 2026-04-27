@@ -211,8 +211,7 @@ serve(async (req) => {
     // send internal notification to team
     try {
       const teamRecipients = [
-        'onestopapplicationservicesllc@gmail.com',
-        'onestopasllc@gmail.com'
+        'Info@onestopasllc.com'
       ];
 
       let subject = `New Appointment: ${name}`;
