@@ -36,49 +36,40 @@ export default function AppointmentSuccess() {
 
   const fetchEventRegistration = async (sessionId: string) => {
     try {
-      const maxAttempts = 15;
-      let attempts = 0;
+      // ✅ SECURE: Call server-side function that verifies with Stripe before updating DB
+      // Users cannot fake a payment — the server checks with Stripe directly
+      const { data, error } = await supabase.functions.invoke('verify-event-payment', {
+        body: { sessionId }
+      });
 
+      if (error) throw error;
+
+      if (data?.verified && data?.registration) {
+        setAppointment({ ...data.registration, isEvent: true });
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: poll the DB in case the webhook already handled it
+      const maxAttempts = 10;
+      let attempts = 0;
       while (attempts < maxAttempts) {
-        const { data, error } = await supabase
+        const { data: reg } = await supabase
           .from('event_registrations')
           .select('*')
           .eq('stripe_session_id', sessionId)
           .maybeSingle();
 
-        if (data) {
-          // ✅ If still pending, mark as paid immediately (webhook backup)
-          if (data.payment_status === 'pending') {
-            await supabase
-              .from('event_registrations')
-              .update({ payment_status: 'paid' })
-              .eq('id', data.id);
-
-            data.payment_status = 'paid';
-
-            // Trigger confirmation email
-            supabase.functions.invoke('send-confirmation-email', {
-              body: {
-                type: 'event_registration',
-                to: data.email,
-                name: data.full_name,
-                areasOfInterest: data.areas_of_interest,
-                cityState: data.city_state,
-                phoneNumber: data.phone_number,
-                sessionId: sessionId
-              }
-            }).catch(console.error);
-          }
-
-          setAppointment({ ...data, isEvent: true });
+        if (reg) {
+          setAppointment({ ...reg, isEvent: true });
           setLoading(false);
           return;
         }
 
-        if (error) throw error;
         await new Promise(resolve => setTimeout(resolve, 1000));
         attempts++;
       }
+
       setError('Registration confirmed, but processing. Check your email or try again.');
       setLoading(false);
     } catch (err: any) {
