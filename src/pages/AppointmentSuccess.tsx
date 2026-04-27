@@ -47,6 +47,29 @@ export default function AppointmentSuccess() {
           .maybeSingle();
 
         if (data) {
+          // ✅ If still pending, mark as paid immediately (webhook backup)
+          if (data.payment_status === 'pending') {
+            await supabase
+              .from('event_registrations')
+              .update({ payment_status: 'paid' })
+              .eq('id', data.id);
+
+            data.payment_status = 'paid';
+
+            // Trigger confirmation email
+            supabase.functions.invoke('send-confirmation-email', {
+              body: {
+                type: 'event_registration',
+                to: data.email,
+                name: data.full_name,
+                areasOfInterest: data.areas_of_interest,
+                cityState: data.city_state,
+                phoneNumber: data.phone_number,
+                sessionId: sessionId
+              }
+            }).catch(console.error);
+          }
+
           setAppointment({ ...data, isEvent: true });
           setLoading(false);
           return;
