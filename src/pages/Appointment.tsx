@@ -1,5 +1,5 @@
 //pages/Appointment.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Upload, CheckCircle2, Clock, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
@@ -88,6 +89,8 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function Appointment() {
+  const [hasReadTerms, setHasReadTerms] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -241,6 +244,19 @@ export default function Appointment() {
       }
 
       setFile(selectedFile);
+    }
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    // Check if user has scrolled to within 20px of the bottom
+    const isAtBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 20;
+    if (isAtBottom && !hasReadTerms) {
+      setHasReadTerms(true);
+      toast({
+        title: "Terms Read",
+        description: "You can now accept the terms and conditions.",
+      });
     }
   };
 
@@ -736,25 +752,68 @@ export default function Appointment() {
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="consent"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 bg-accent/20">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="cursor-pointer text-sm">
-                                  I consent to the collection and use of my information for appointment scheduling *
-                                </FormLabel>
+                        <div className="space-y-4">
+                          <FormLabel className="text-sm font-medium">Terms & Conditions *</FormLabel>
+                          <div className="rounded-lg border bg-muted/30 overflow-hidden">
+                            <ScrollArea 
+                              className="h-[200px] p-4" 
+                              onScrollCapture={handleScroll}
+                            >
+                              <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+                                <h4 className="font-bold text-primary">1. Nature of Services</h4>
+                                <p>OneStop Application Services LLC provides non-legal professional assistance with various application processes. We are NOT a law firm and do not provide legal advice, legal opinions, or legal representation. Our services are limited to guidance, form preparation, and administrative support.</p>
+                                
+                                <h4 className="font-bold text-primary">2. Appointment Deposit</h4>
+                                <p>A non-refundable deposit of $75 is required to secure your appointment. This deposit covers the initial consultation and will be applied toward your final service fee. Payment is processed securely via Stripe.</p>
+                                
+                                <h4 className="font-bold text-primary">3. Cancellation & Rescheduling</h4>
+                                <p>Appointments may be rescheduled up to 24 hours in advance without penalty. Cancellations made less than 24 hours before the scheduled time or "no-shows" will result in the forfeiture of the $75 deposit.</p>
+                                
+                                <h4 className="font-bold text-primary">4. Accuracy of Information</h4>
+                                <p>The applicant is solely responsible for the accuracy and completeness of all information provided to OneStop Application Services LLC and for the final review of any application before submission. We are not liable for delays or denials caused by incorrect or incomplete information.</p>
+                                
+                                <h4 className="font-bold text-primary">5. Confidentiality & Privacy</h4>
+                                <p>We maintain strict confidentiality regarding all personal documents and information provided. Your data is handled in accordance with our Privacy Policy and used only for the purpose of fulfilling the requested services.</p>
+                                
+                                <h4 className="font-bold text-primary">6. Acceptance</h4>
+                                <p>By checking the box below and completing your booking, you acknowledge that you have read, understood, and agreed to these Terms and Conditions.</p>
                               </div>
-                            </FormItem>
+                            </ScrollArea>
+                          </div>
+                          
+                          {!hasReadTerms && (
+                            <p className="text-xs text-secondary font-medium flex items-center gap-1 animate-pulse">
+                              <Info size={12} /> Please scroll to the bottom to enable acceptance
+                            </p>
                           )}
-                        />
+
+                          <FormField
+                            control={form.control}
+                            name="consent"
+                            render={({ field }) => (
+                              <FormItem className={cn(
+                                "flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 transition-all duration-300",
+                                hasReadTerms ? "bg-accent/20 border-primary/30" : "bg-muted/10 opacity-60 cursor-not-allowed"
+                              )}>
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    disabled={!hasReadTerms}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className={cn(
+                                    "text-sm",
+                                    hasReadTerms ? "cursor-pointer" : "cursor-not-allowed"
+                                  )}>
+                                    I have read and agree to the Terms and Conditions *
+                                  </FormLabel>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
 
                       {/* Submit Button */}
@@ -762,7 +821,7 @@ export default function Appointment() {
                         type="submit"
                         size="lg"
                         className="w-full h-12 text-base font-semibold"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !form.watch('consent')}
                       >
                         {isSubmitting ? (
                           <>
