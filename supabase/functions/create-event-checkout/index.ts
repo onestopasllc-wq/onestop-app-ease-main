@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,104 +11,102 @@ const corsHeaders = {
 console.log("Event Registration Checkout function initialized");
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const requestBody = await req.text();
-    console.log("Request body received:", requestBody);
+    if (!requestBody) throw new Error("Empty request body");
 
-    if (!requestBody) {
-      throw new Error("Empty request body");
-    }
-
-    let registrationData;
+    let registrationData: any;
     try {
       const body = JSON.parse(requestBody);
       registrationData = body.registrationData;
-      console.log("Parsed registrationData:", registrationData ? "present" : "missing");
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      return new Response(JSON.stringify({
-        error: "Invalid JSON in request body"
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     if (!registrationData) {
-      console.error("No registrationData provided");
-      return new Response(JSON.stringify({
-        error: "Registration data is required"
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      return new Response(JSON.stringify({ error: "Registration data is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    console.log("Stripe key exists:", !!stripeSecretKey);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!stripeSecretKey) {
-      throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+    if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not set");
+    if (!supabaseUrl || !supabaseServiceKey) throw new Error("Supabase credentials not set");
+
+    // ✅ STEP 1: Save registration to DB first with 'pending' status
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: pendingReg, error: insertError } = await supabaseAdmin
+      .from("event_registrations")
+      .insert({
+        full_name: registrationData.full_name,
+        email: registrationData.email,
+        phone_number: registrationData.phone_number,
+        areas_of_interest: registrationData.areas_of_interest || [],
+        other_interest: registrationData.other_interest || null,
+        city_state: registrationData.city_state,
+        payment_status: "pending",
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("❌ Failed to pre-save registration:", insertError);
+      throw new Error("Failed to save registration: " + insertError.message);
     }
+    console.log("✅ Pre-saved registration ID:", pendingReg.id);
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2024-11-20.acacia"
-    });
-
+    // ✅ STEP 2: Create Stripe session with only the small registration ID in metadata
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-11-20.acacia" });
     const origin = req.headers.get("origin") || "https://onestopasllc.com";
-    console.log("Origin:", origin);
-
-    console.log("Creating Stripe checkout session for event registration...");
 
     const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "Event Registration Fee",
-              description: "Registration for OneStop Application Services Event"
-            },
-            unit_amount: 50 // $0.50 for testing (Stripe minimum is usually $0.50)
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Event Registration Fee",
+            description: "Registration for OneStop Application Services Event"
           },
-          quantity: 1
-        }
-      ],
+          unit_amount: 50 // $0.50 for testing
+        },
+        quantity: 1
+      }],
       mode: "payment",
       customer_email: registrationData.email,
       success_url: `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}&type=event`,
       cancel_url: `${origin}/event-registration`,
       metadata: {
         type: "event_registration",
-        registration_data: JSON.stringify(registrationData),
-        customer_name: registrationData.full_name,
-        customer_email: registrationData.email,
-        customer_phone: registrationData.phone_number,
+        registration_id: pendingReg.id, // ✅ Just the ID — stays well under 500 chars
       },
     });
 
-    console.log("✅ Event Checkout session created successfully:", session.id);
+    // ✅ STEP 3: Update the registration with the stripe session ID
+    await supabaseAdmin
+      .from("event_registrations")
+      .update({ stripe_session_id: session.id })
+      .eq("id", pendingReg.id);
 
-    return new Response(JSON.stringify({
-      url: session.url,
-      sessionId: session.id
-    }), {
+    console.log("✅ Event Checkout session created:", session.id);
+
+    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200
     });
 
   } catch (error: any) {
     console.error("Error creating event checkout session:", error.message);
-    return new Response(JSON.stringify({
-      error: error.message
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

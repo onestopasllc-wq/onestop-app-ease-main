@@ -352,61 +352,62 @@ async function handleRentalListing(session: any, supabaseAdmin: any, reassembled
   }
 }
 
-async function handleEventRegistration(session: any, supabaseAdmin: any, reassembledData: any) {
+async function handleEventRegistration(session: any, supabaseAdmin: any, _reassembledData: any) {
   console.log('🎟️ Processing Event Registration Payment:', session.id);
 
   try {
     const metadata = session.metadata || {};
-    let registrationData = reassembledData;
+    const registrationId = metadata.registration_id;
 
-    if (!registrationData && metadata.registration_data) {
-      try {
-        registrationData = JSON.parse(metadata.registration_data);
-      } catch (e) {
-        console.error('Fallback registration_data parse failed');
-      }
+    console.log('Looking up registration ID from metadata:', registrationId);
+
+    if (!registrationId) {
+      throw new Error("No registration_id found in session metadata");
     }
 
-    if (!registrationData) {
-      throw new Error("No registration data found in metadata");
-    }
-
-    console.log('Creating registration for:', registrationData.full_name);
-
-    const { data: newRegistration, error: insertError } = await supabaseAdmin
+    // ✅ Look up the pre-saved registration by its ID
+    const { data: existingReg, error: fetchError } = await supabaseAdmin
       .from('event_registrations')
-      .insert({
-        full_name: registrationData.full_name,
-        email: registrationData.email,
-        phone_number: registrationData.phone_number,
-        areas_of_interest: registrationData.areas_of_interest || [],
-        other_interest: registrationData.other_interest || null,
-        city_state: registrationData.city_state,
+      .select('*')
+      .eq('id', registrationId)
+      .maybeSingle();
+
+    if (fetchError || !existingReg) {
+      console.error('❌ Could not find pre-saved registration:', fetchError);
+      throw new Error(`Registration not found for ID: ${registrationId}`);
+    }
+
+    console.log('✅ Found pre-saved registration for:', existingReg.full_name);
+
+    // ✅ Update it to 'paid' and attach the stripe session ID
+    const { error: updateError } = await supabaseAdmin
+      .from('event_registrations')
+      .update({
         payment_status: 'paid',
         stripe_session_id: session.id
       })
-      .select()
-      .single();
+      .eq('id', registrationId);
 
-    if (insertError) {
-      console.error('❌ Failed to insert registration:', insertError);
-      throw insertError;
+    if (updateError) {
+      console.error('❌ Failed to update registration status:', updateError);
+      throw updateError;
     }
 
-    console.log(`✅ Event registration created ID: ${newRegistration.id}`);
+    console.log(`✅ Event registration marked as PAID. ID: ${registrationId}`);
 
-    // Send confirmation email
+    // ✅ Send professional confirmation email
     await supabaseAdmin.functions.invoke('send-confirmation-email', {
       body: {
         type: 'event_registration',
-        to: registrationData.email,
-        name: registrationData.full_name,
-        areasOfInterest: registrationData.areas_of_interest,
-        cityState: registrationData.city_state,
-        phoneNumber: registrationData.phone_number,
+        to: existingReg.email,
+        name: existingReg.full_name,
+        areasOfInterest: existingReg.areas_of_interest,
+        cityState: existingReg.city_state,
+        phoneNumber: existingReg.phone_number,
         sessionId: session.id
       }
     }).catch((err: any) => console.error('Error triggering event confirmation email:', err));
+
   } catch (error: any) {
     console.error('❌ Error handling event registration:', error);
     throw error;
