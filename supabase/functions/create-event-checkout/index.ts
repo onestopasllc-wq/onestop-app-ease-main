@@ -76,7 +76,7 @@ serve(async (req) => {
             name: "Event Registration Fee",
             description: "Registration for OneStop Application Services Event"
           },
-          unit_amount: 50 // $0.50 for testing
+          unit_amount: 1500 // $15.00 production price
         },
         quantity: 1
       }],

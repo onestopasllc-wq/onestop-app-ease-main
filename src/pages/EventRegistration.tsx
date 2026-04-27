@@ -251,7 +251,7 @@ export default function EventRegistration() {
                           </p>
                           <p className="text-sm text-muted-foreground">Visa, MasterCard accepted</p>
                         </div>
-                        <span className="text-2xl font-bold text-primary">$0.50</span>
+                        <span className="text-2xl font-bold text-primary">$15</span>
                       </div>
 
                       <Button
@@ -268,7 +268,7 @@ export default function EventRegistration() {
                         ) : (
                           <>
                             <CheckCircle2 className="mr-2 h-5 w-5" />
-                            Register Now - $0.50
+                            Register Now - $15
                           </>
                         )}
                       </Button>

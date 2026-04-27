@@ -198,7 +198,7 @@ serve(async (req) => {
               <p><strong>You're registered!</strong> We have received your registration for our upcoming event.</p>
               <div class="info-box">
                   <p><strong>🎟️ Registration Type:</strong> Event Attendee</p>
-                  <p><strong>💰 Status:</strong> Paid ($0.50)</p>
+                  <p><strong>💰 Status:</strong> Paid ($15.00)</p>
                   <p><strong>📍 Location:</strong> ${payload.cityState || 'N/A'}</p>
               </div>
               <div style="text-align: center; margin: 30px 0;">
