@@ -269,7 +269,7 @@ const Admin = () => {
       upcoming_count: data.filter(apt => apt.appointment_date > today).length,
       paid_count: data.filter(apt => apt.payment_status === 'paid').length,
       event_registrations_count: eventCount || 0,
-      total_revenue: (data.filter(apt => apt.payment_status === 'paid').length * 75) + ((eventCount || 0) * 15)
+      total_revenue: (data.filter(apt => apt.payment_status === 'paid').length * 75) + ((eventCount || 0) * 30)
     };
     setStats(stats);
   };

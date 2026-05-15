@@ -28,7 +28,7 @@ const Navbar = () => {
   const moreLinks = [
     { to: "/rentals", label: "Rentals" },
     { to: "/community-services", label: "More" },
-    { to: "/event-registration", label: "Event Registration" },
+    { to: "/event", label: "Event Registration" },
   ];
 
   const isActive = (path: string) => location.pathname === path;

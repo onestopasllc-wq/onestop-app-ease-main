@@ -76,14 +76,14 @@ serve(async (req) => {
             name: "Event Registration Fee",
             description: "Registration for OneStop Application Services Event"
           },
-          unit_amount: 1500 // $15.00 production price
+          unit_amount: 3000 // $30.00 production price
         },
         quantity: 1
       }],
       mode: "payment",
       customer_email: registrationData.email,
       success_url: `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}&type=event`,
-      cancel_url: `${origin}/event-registration`,
+      cancel_url: `${origin}/event`,
       metadata: {
         type: "event_registration",
         registration_id: pendingReg.id, // ✅ Just the ID — stays well under 500 chars
