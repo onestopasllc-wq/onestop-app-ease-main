@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EventTicket } from '@/components/EventTicket';
 import { Download } from 'lucide-react';
+import appStoreBadge from "@/assets/applestorebuge.png";
 
 export default function AppointmentSuccess() {
   const [searchParams] = useSearchParams();
@@ -346,6 +347,42 @@ export default function AppointmentSuccess() {
               </>
             )}
             </CardContent>
+
+            {/* App Download Section */}
+            <div className="border-t bg-muted/30 p-8 text-center print:hidden">
+              <h3 className="font-bold text-xl mb-3 flex items-center justify-center gap-2">
+                <span className="text-2xl">📱</span> Get Our Mobile App
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                Download our app for a better experience, real-time updates, and easy access to your tickets.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.onestopasllc.app&hl=en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-all hover:scale-105 active:scale-95"
+                >
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                    alt="Get it on Google Play"
+                    className="h-10 md:h-12 w-auto shadow-sm rounded-lg"
+                  />
+                </a>
+                <a
+                  href="https://apps.apple.com/app/id6759644249"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-all hover:scale-105 active:scale-95"
+                >
+                  <img
+                    src={appStoreBadge}
+                    alt="Download on the App Store"
+                    className="h-10 md:h-12 w-auto shadow-sm rounded-lg"
+                  />
+                </a>
+              </div>
+            </div>
           </Card>
         </motion.div>
       </div>
