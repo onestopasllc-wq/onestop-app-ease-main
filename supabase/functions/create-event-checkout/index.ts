@@ -20,9 +20,11 @@ serve(async (req) => {
     if (!requestBody) throw new Error("Empty request body");
 
     let registrationData: any;
+    let eventId: string | null = null;
     try {
       const body = JSON.parse(requestBody);
       registrationData = body.registrationData;
+      eventId = body.eventId;
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -42,11 +44,38 @@ serve(async (req) => {
     if (!stripeSecretKey) throw new Error("STRIPE_SECRET_KEY not set");
     if (!supabaseUrl || !supabaseServiceKey) throw new Error("Supabase credentials not set");
 
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ✅ STEP 0: Validate Event Status
+    const { data: event, error: eventError } = await supabaseAdmin
+      .from('events')
+      .select('status, registration_deadline')
+      .eq('id', eventId)
+      .single();
+
+    if (eventError || !event) {
+      console.error("❌ Event validation failed:", eventError);
+      return new Response(JSON.stringify({ error: "Event not found or invalid ID." }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const deadline = new Date(event.registration_deadline);
+    const now = new Date();
+
+    if (event.status !== 'active' || now > deadline) {
+      console.error("❌ Registration blocked: Event is", event.status, "or deadline passed");
+      return new Response(JSON.stringify({ error: "Registration for this event is currently closed." }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
     // ✅ STEP 1: Save registration to DB first with 'pending' status
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { data: pendingReg, error: insertError } = await supabaseAdmin
       .from("event_registrations")
       .insert({
+        event_id: eventId,
         full_name: registrationData.full_name,
         email: registrationData.email,
         phone_number: registrationData.phone_number,

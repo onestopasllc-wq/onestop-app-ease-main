@@ -43,7 +43,8 @@ import {
   HeartPulse,
   Home,
   Globe,
-  Briefcase
+  Briefcase,
+  Settings2
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import AnimatedBackground from "@/components/AnimatedBackground";
@@ -60,6 +61,7 @@ import { AdminRentalsCRUD } from "@/components/AdminRentalsCRUD";
 import { CommunityServicesAdmin } from "@/components/CommunityServicesAdmin";
 import { JobAdmin } from "@/components/JobAdmin";
 import { EventRegistrationAdmin } from "@/components/EventRegistrationAdmin";
+import { AdminEventManagement } from "@/components/AdminEventManagement";
 import { z } from "zod";
 
 // Input validation schemas
@@ -1297,6 +1299,28 @@ const Admin = () => {
                   </CardHeader>
                   <CardContent>
                     <EventRegistrationAdmin />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Event Control Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.23 }}
+                id="event-control"
+              >
+                <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-border/50 shadow-xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3 pointer-events-none" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-foreground flex items-center gap-2">
+                       <Settings2 className="h-5 w-5 text-primary" />
+                       Event Control Center
+                    </CardTitle>
+                    <CardDescription>Manage event status, deadlines, and visibility</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AdminEventManagement />
                   </CardContent>
                 </Card>
               </motion.div>

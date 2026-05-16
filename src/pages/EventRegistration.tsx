@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, CreditCard, MapPin, Phone, User, BookOpen, ClipboardList, Smartphone, Apple, Play, ArrowRight, Download } from "lucide-react";
+import { CheckCircle2, CreditCard, MapPin, Phone, User, BookOpen, ClipboardList, Smartphone, Apple, Play, ArrowRight, Download, Loader2, Ban } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +37,32 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function EventRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeEvent, setActiveEvent] = useState<any>(null);
+  const [isLoadingEvent, setIsLoadingEvent] = useState(true);
+
+  useEffect(() => {
+    fetchActiveEvent();
+  }, []);
+
+  const fetchActiveEvent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('status', 'active')
+        .gt('registration_deadline', new Date().toISOString())
+        .order('registration_deadline', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      setActiveEvent(data);
+    } catch (error) {
+      console.error('Error fetching event:', error);
+    } finally {
+      setIsLoadingEvent(false);
+    }
+  };
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -58,6 +84,7 @@ export default function EventRegistration() {
         'create-event-checkout',
         {
           body: {
+            eventId: activeEvent?.id,
             registrationData: {
               full_name: data.fullName,
               email: data.email,
@@ -129,7 +156,7 @@ export default function EventRegistration() {
               animate={{ opacity: 1, y: 0 }}
               className="text-4xl md:text-6xl font-black mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-600 to-primary"
             >
-              Secure Your Spot Today
+              {activeEvent ? activeEvent.title : "Event Registration"}
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0 }}
@@ -137,7 +164,7 @@ export default function EventRegistration() {
               transition={{ delay: 0.2 }}
               className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto"
             >
-              Join the elite circle of professionals and innovators. Complete your registration to access exclusive event features.
+              {activeEvent ? activeEvent.description : "Join the elite circle of professionals and innovators. Complete your registration to access exclusive event features."}
             </motion.p>
           </div>
 
@@ -149,7 +176,12 @@ export default function EventRegistration() {
               transition={{ duration: 0.6 }}
               className="lg:col-span-7 lg:order-2"
             >
-              <Card className="border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10">
+              {isLoadingEvent ? (
+                <Card className="border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-center p-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </Card>
+              ) : activeEvent ? (
+                <Card className="border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10">
                 <CardContent className="p-8 md:p-12">
                   <div className="mb-10">
                     <h3 className="text-2xl font-bold mb-2">Registration Form</h3>
@@ -329,6 +361,24 @@ export default function EventRegistration() {
                   </Form>
                 </CardContent>
               </Card>
+              ) : (
+                <Card className="border-none shadow-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10 p-12 text-center">
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                      <Ban className="w-10 h-10" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-3xl font-black text-zinc-900 dark:text-white">Registration Closed</h3>
+                      <p className="text-muted-foreground text-lg max-w-md mx-auto">
+                        We're sorry, but registration for this event is currently closed or has reached capacity.
+                      </p>
+                    </div>
+                    <Button variant="outline" size="lg" className="rounded-xl px-8" onClick={() => window.location.href = '/'}>
+                      Return to Home
+                    </Button>
+                  </div>
+                </Card>
+              )}
             </motion.div>
 
             {/* Left Column (Desktop) / Bottom Column (Mobile): Info & App Pass */}

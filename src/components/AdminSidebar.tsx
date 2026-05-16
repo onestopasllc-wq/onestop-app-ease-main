@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Settings, Ban, LogOut, ChevronLeft, Sparkles, MessageSquare, Car, ShieldCheck, HeartPulse, Home, Globe, Briefcase } from "lucide-react";
+import { LayoutDashboard, Calendar, Settings, Ban, LogOut, ChevronLeft, Sparkles, MessageSquare, Car, ShieldCheck, HeartPulse, Home, Globe, Briefcase, Settings2 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -20,10 +20,11 @@ import { toast } from "sonner";
 const menuItems = [
   { title: "Dashboard", url: "#dashboard", icon: LayoutDashboard },
   { title: "Appointments", url: "#appointments", icon: Calendar },
+  { title: "Event Control", url: "#event-control", icon: Settings2 },
+  { title: "Event Reg", url: "#event-registrations", icon: Briefcase },
   { title: "Promotional Popups", url: "#popups", icon: Sparkles },
   { title: "Testimonials", url: "#testimonials", icon: MessageSquare },
   { title: "Rentals", url: "#rentals", icon: Home },
-  { title: "Event Reg", url: "#event-registrations", icon: Briefcase },
   { title: "More", url: "#community-services", icon: Globe },
   { title: "Job Posts", url: "#job-posts", icon: Briefcase },
   { title: "Availability", url: "#availability", icon: Settings },
