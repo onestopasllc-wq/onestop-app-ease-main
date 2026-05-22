@@ -77,6 +77,7 @@ export default function EventRegistration() {
   });
 
   const onSubmit = async (data: FormData) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {

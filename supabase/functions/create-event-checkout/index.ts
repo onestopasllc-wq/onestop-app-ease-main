@@ -71,7 +71,6 @@ serve(async (req) => {
     }
 
     // ✅ STEP 1: Save registration to DB first with 'pending' status
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { data: pendingReg, error: insertError } = await supabaseAdmin
       .from("event_registrations")
       .insert({

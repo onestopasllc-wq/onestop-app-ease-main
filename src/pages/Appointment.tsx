@@ -261,7 +261,9 @@ export default function Appointment() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
+    let shouldResetSubmitting = true;
 
     try {
       let fileUrl = null;
@@ -314,6 +316,7 @@ export default function Appointment() {
 
       if (checkoutData?.url) {
         // Redirect to Stripe (not opening in new tab for better UX)
+        shouldResetSubmitting = false;
         window.location.href = checkoutData.url;
       }
 
@@ -325,7 +328,9 @@ export default function Appointment() {
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      if (shouldResetSubmitting) {
+        setIsSubmitting(false);
+      }
     }
   };
 

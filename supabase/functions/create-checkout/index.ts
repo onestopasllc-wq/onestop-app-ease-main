@@ -91,6 +91,18 @@ serve(async (req) => {
 
     console.log("Creating Stripe checkout session with booking data in metadata...");
 
+    // Helper to chunk data for Stripe metadata (500 char limit)
+    const chunkData = (data: any) => {
+      const str = JSON.stringify(data);
+      const chunks: Record<string, string> = {};
+      const chunkSize = 450; // Leave some buffer
+
+      for (let i = 0; i < str.length; i += chunkSize) {
+        chunks[`data_${Math.floor(i / chunkSize)}`] = str.slice(i, i + chunkSize);
+      }
+      return chunks;
+    };
+
     // Create checkout session with booking data in metadata
     const session = await stripe.checkout.sessions.create({
       line_items: [
@@ -111,13 +123,13 @@ serve(async (req) => {
       cancel_url: `${origin}/appointment`,
       // Store booking data in metadata for webhook processing
       metadata: {
-        // Store as JSON string to preserve structure
-        booking_data: JSON.stringify(bookingData),
+        type: "appointment_booking",
         // Also store key fields at top level for easy access/debugging
         customer_email: bookingData.email,
         customer_name: bookingData.full_name,
         appointment_date: bookingData.appointment_date,
         appointment_time: bookingData.appointment_time,
+        ...chunkData(bookingData),
       },
       // Prefill customer email in Stripe checkout
       customer_email: bookingData.email,

@@ -36,19 +36,28 @@ serve(async (req) => {
       );
     }
 
-    const body = await req.text();
+    // Get raw body as bytes to prevent ANY character encoding corruption
+    const rawBodyBuffer = await req.arrayBuffer();
+    const payload = new Uint8Array(rawBodyBuffer);
+    const bodyLength = payload.length;
 
-    // Get environment variables
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET");
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // Get environment variables and trim whitespace/newlines
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SIGNING_SECRET")?.trim();
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")?.trim();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
 
     console.log("Environment check:", {
       hasWebhookSecret: !!webhookSecret,
+      webhookSecretLength: webhookSecret?.length,
+      webhookSecretPrefix: webhookSecret ? `${webhookSecret.slice(0, 8)}...${webhookSecret.slice(-4)}` : null,
       hasStripeKey: !!stripeSecretKey,
+      stripeKeyPrefix: stripeSecretKey ? `${stripeSecretKey.slice(0, 8)}...` : null,
       hasSupabaseUrl: !!supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey
+      hasServiceKey: !!supabaseServiceKey,
+      bodyLength: bodyLength,
+      signatureExists: !!signature,
+      signaturePrefix: signature ? `${signature.slice(0, 20)}...` : null
     });
 
     if (!webhookSecret) {
@@ -66,19 +75,33 @@ serve(async (req) => {
       apiVersion: "2024-11-20.acacia",
     });
 
+    // Create a crypto provider for Web Crypto (required in Deno/Edge Functions)
+    const cryptoProvider = Stripe.createSubtleCryptoProvider();
+
     let event;
     try {
       console.log("Verifying Stripe event signature...");
       event = await stripe.webhooks.constructEventAsync(
-        body,
+        payload,
         signature,
-        webhookSecret
+        webhookSecret,
+        undefined,
+        cryptoProvider
       );
       console.log("✅ Event verified successfully:", event.type, event.id);
     } catch (err: any) {
       console.error("❌ Webhook signature verification failed:", err.message);
       return new Response(
-        JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
+        JSON.stringify({ 
+          error: `Webhook signature verification failed: ${err.message}`,
+          debug: {
+            webhookSecretPrefix: webhookSecret ? `${webhookSecret.slice(0, 8)}...${webhookSecret.slice(-4)}` : "missing",
+            signaturePrefix: signature ? `${signature.slice(0, 15)}...` : "missing",
+            bodyLength: bodyLength,
+            isLiveMode: signature?.includes("v1="), // Signature format sanity check
+            hint: "Check your Stripe Dashboard > Developers > Webhooks. Ensure the Signing Secret (whsec_...) matches the webhookSecretPrefix exactly. Note: Live mode and Test mode have DIFFERENT secrets."
+          }
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -144,10 +167,10 @@ async function handleCheckoutSessionCompleted(session: any, supabaseAdmin: any) 
     // 1. Reassemble chunked metadata if present
     let reassembledData: any = null;
     const chunkKeys = Object.keys(metadata)
-      .filter(key => key.startsWith('data_')) // Matches new format
+      .filter(key => key.startsWith('data_') || key.startsWith('data_chunk_'))
       .sort((a, b) => {
-        const numA = parseInt(a.split('_')[2]);
-        const numB = parseInt(b.split('_')[2]);
+        const numA = parseInt(a.match(/\d+$/)?.[0] || '0', 10);
+        const numB = parseInt(b.match(/\d+$/)?.[0] || '0', 10);
         return numA - numB;
       });
 
@@ -316,6 +339,18 @@ async function handleRentalListing(session: any, supabaseAdmin: any, reassembled
       throw new Error("No reassembled listing data found in metadata");
     }
 
+    // Check if listing already exists (idempotency)
+    const { data: existingListing } = await supabaseAdmin
+      .from('rental_listings')
+      .select('id')
+      .eq('stripe_session_id', session.id)
+      .maybeSingle();
+
+    if (existingListing) {
+      console.log('✅ Rental listing already created for session:', session.id);
+      return;
+    }
+
     console.log('Creating listing for:', listingData.title);
 
     const { data: newListing, error: insertError } = await supabaseAdmin
@@ -378,6 +413,11 @@ async function handleEventRegistration(session: any, supabaseAdmin: any, _reasse
     }
 
     console.log('✅ Found pre-saved registration for:', existingReg.full_name);
+
+    if (existingReg.payment_status === 'paid') {
+      console.log('✅ Event registration already marked as PAID. ID:', registrationId);
+      return;
+    }
 
     // ✅ Update it to 'paid' and attach the stripe session ID
     const { error: updateError } = await supabaseAdmin
