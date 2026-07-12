@@ -183,7 +183,7 @@ export const RentalForm = () => {
             }
 
             toast.success("Listing submitted! We'll review it shortly and notify you by email.");
-            navigate('/dashboard/rentals');
+            navigate('/dashboard/listings');
 
         } catch (error: any) {
             toast.error("Failed to submit listing: " + error.message);
