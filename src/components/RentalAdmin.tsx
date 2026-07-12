@@ -30,6 +30,8 @@ interface RentalListing {
     status: string;
     price: number;
     contact_name: string;
+    contact_email: string;
+    contact_phone: string;
     payment_status: string;
     created_at: string;
     description: string;
@@ -217,6 +219,14 @@ export const RentalAdmin = () => {
                                     <div>
                                         <span className="font-medium text-muted-foreground">Contact:</span>
                                         <p>{selectedListing.contact_name}</p>
+                                        <p className="text-xs mt-1">
+                                            <a href={`mailto:${selectedListing.contact_email}`} className="text-primary hover:underline block">
+                                                {selectedListing.contact_email}
+                                            </a>
+                                            <a href={`tel:${selectedListing.contact_phone}`} className="text-primary hover:underline block mt-0.5">
+                                                {selectedListing.contact_phone}
+                                            </a>
+                                        </p>
                                     </div>
                                 </div>
 
@@ -280,9 +290,16 @@ const ListingRow = ({ listing, onView, onApprove, onReject, onDelete, simple }: 
                 </div>
                 <div>
                     <h4 className="font-medium line-clamp-1">{listing.title}</h4>
-                    <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <span>${listing.price}</span>
-                        {!simple && <span className="hidden sm:inline">• {listing.contact_name}</span>}
+                    <div className="text-xs text-muted-foreground flex flex-col gap-0.5 mt-0.5">
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">${listing.price}</span>
+                            <span>• {listing.contact_name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <a href={`mailto:${listing.contact_email}`} className="text-primary hover:underline">{listing.contact_email}</a>
+                            <span>•</span>
+                            <a href={`tel:${listing.contact_phone}`} className="text-primary hover:underline">{listing.contact_phone}</a>
+                        </div>
                     </div>
                 </div>
             </div>
