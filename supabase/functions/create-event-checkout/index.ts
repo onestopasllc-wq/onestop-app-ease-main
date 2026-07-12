@@ -21,10 +21,12 @@ serve(async (req) => {
 
     let registrationData: any;
     let eventId: string | null = null;
+    let isMobile = false;
     try {
       const body = JSON.parse(requestBody);
       registrationData = body.registrationData;
       eventId = body.eventId;
+      isMobile = !!body.isMobile;
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -96,6 +98,14 @@ serve(async (req) => {
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2024-11-20.acacia" });
     const origin = req.headers.get("origin") || "https://onestopasllc.com";
 
+    const successUrl = isMobile 
+      ? `onestopasllc://payment-success?session_id={CHECKOUT_SESSION_ID}&type=event`
+      : `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}&type=event`;
+      
+    const cancelUrl = isMobile
+      ? `onestopasllc://payment-cancel`
+      : `${origin}/event`;
+
     const session = await stripe.checkout.sessions.create({
       line_items: [{
         price_data: {
@@ -110,8 +120,8 @@ serve(async (req) => {
       }],
       mode: "payment",
       customer_email: registrationData.email,
-      success_url: `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}&type=event`,
-      cancel_url: `${origin}/event`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         type: "event_registration",
         registration_id: pendingReg.id, // ✅ Just the ID — stays well under 500 chars

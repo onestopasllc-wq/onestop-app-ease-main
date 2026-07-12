@@ -20,10 +20,17 @@ export default function AppointmentSuccess() {
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
+    const directId = searchParams.get('id');
     const type = searchParams.get('type');
 
+    // Handle direct booking (no payment)
+    if (directId) {
+      fetchAppointmentById(directId);
+      return;
+    }
+
     if (!sessionId) {
-      setError('No session ID provided');
+      setError('No booking reference provided');
       setLoading(false);
       return;
     }
@@ -34,8 +41,31 @@ export default function AppointmentSuccess() {
       fetchAppointment(sessionId);
     }
   }, [searchParams]);
+  const fetchAppointmentById = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setAppointment({ ...data, isDirectBooking: true });
+      } else {
+        setError('Appointment not found. Please check your confirmation email.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load appointment details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const fetchEventRegistration = async (sessionId: string) => {
+
     try {
       // ✅ SECURE: Call server-side function that verifies with Stripe before updating DB
       // Users cannot fake a payment — the server checks with Stripe directly
@@ -138,7 +168,7 @@ export default function AppointmentSuccess() {
               <div className="absolute inset-0 h-16 w-16 border-4 border-primary/20 rounded-full mx-auto animate-pulse"></div>
             </div>
             <h2 className="text-2xl font-semibold mb-2">Confirming Your Appointment</h2>
-            <p className="text-muted-foreground">Processing your payment and creating your booking...</p>
+            <p className="text-muted-foreground">{appointment.isDirectBooking ? 'Confirming your appointment...' : 'Processing your payment and creating your booking...'}</p>
             <p className="text-sm text-muted-foreground mt-2">This may take a few seconds</p>
           </motion.div>
         </div>
@@ -225,7 +255,7 @@ export default function AppointmentSuccess() {
                 Thank you, {appointment.full_name?.split(' ')[0]}!
               </CardTitle>
               <p className="text-lg text-muted-foreground">
-                Payment successful and {appointment.isEvent ? 'registration' : 'appointment'} confirmed
+                {appointment.isEvent ? 'Registration confirmed' : appointment.isDirectBooking ? 'Your appointment is confirmed' : 'Payment successful and appointment confirmed'}
               </p>
             </CardHeader>
             <CardContent className="space-y-8">

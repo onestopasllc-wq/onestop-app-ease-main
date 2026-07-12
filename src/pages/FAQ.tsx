@@ -27,7 +27,7 @@ const FAQ = () => {
     },
     {
       question: "How much do your services cost?",
-      answer: "Our pricing varies based on the service complexity and scope. We require a $10 deposit to book an appointment, which goes toward your total service fee. After your consultation, we'll provide a detailed quote based on your specific needs. We offer competitive pricing and flexible payment options.",
+      answer: "Our pricing varies based on the service complexity and scope. After your consultation, we'll provide a detailed quote based on your specific needs. We offer competitive pricing and flexible payment options.",
     },
     {
       question: "Can you help with applications outside the United States?",
@@ -35,7 +35,7 @@ const FAQ = () => {
     },
     {
       question: "How do I book an appointment?",
-      answer: "Booking is easy! Simply visit our Appointment page, fill out the booking form with your details and select your preferred date/time. You'll need to pay a $10 deposit to secure your appointment. Once confirmed, we'll send you a confirmation email with next steps and any documents to prepare.",
+      answer: "Booking is easy! Simply visit our Appointment page, fill out the booking form with your details and select your preferred date/time. Once confirmed, we'll send you a confirmation email with next steps and any documents to prepare.",
     },
     {
       question: "What if I need to reschedule my appointment?",

@@ -73,6 +73,14 @@ serve(async (req) => {
       if (!payload.adminEmail && !to) {
         return new Response(JSON.stringify({ error: 'Missing recipient for rental' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+    } else if (type === 'rental_submission') {
+      if (!to || !name) {
+        return new Response(JSON.stringify({ error: 'Missing recipient for rental submission' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    } else if (type === 'rental_approval' || type === 'rental_rejection') {
+      if (!to || !name) {
+        return new Response(JSON.stringify({ error: 'Missing recipient for rental status update' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     } else if (type === 'event_registration') {
       if (!to || !name) {
         return new Response(JSON.stringify({ error: 'Missing recipient for event' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -169,6 +177,46 @@ serve(async (req) => {
           </div>
           </body>
           </html>`;
+      } else if (type === 'rental_submission') {
+        clientSubject = "Rental Listing Submitted - OneStop Application Services";
+        clientHtml = `<!DOCTYPE html>
+          <html>
+          <head>
+          <meta charset="utf-8">
+          <style>
+              body { font-family: 'Lato', sans-serif; line-height: 1.6; color: #1A365D; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #1A365D, #00B5AD); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+              .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
+              .info-box { background: #F5F6FA; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #00B5AD; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+          </style>
+          </head>
+          <body>
+          <div class="container">
+              <div class="header" style="display:flex;align-items:center;gap:16px;">
+              <img src="${SENDER_LOGO_URL}" alt="OneStop logo" style="height:56px;width:auto;border-radius:6px;object-fit:contain;" />
+              <div>
+                  <h1 style="margin: 0; font-size: 22px;">Listing Submitted!</h1>
+                  <p style="margin: 6px 0 0 0;font-size:14px;">OneStop Application Services LLC</p>
+              </div>
+              </div>
+              <div class="content">
+              <p>Dear ${name},</p>
+              <p><strong>Thank you for submitting your rental listing!</strong></p>
+              <div class="info-box">
+                  <p><strong>🏠 Listing:</strong> ${payload.listingTitle || 'Rental Listing'}</p>
+                  <p><strong>💵 Monthly Price:</strong> $${payload.listingPrice || 'N/A'}/mo</p>
+                  <p><strong>ℹ️ Status:</strong> Pending Admin Approval</p>
+              </div>
+              <p>Our team will review your listing shortly. You will receive another email once it is approved and goes live on the site.</p>
+              <p>Best regards,<br><strong>The OneStop Team</strong></p>
+              </div>
+              <div class="footer"><p>© ${new Date().getFullYear()} OneStop Application Services LLC</p></div>
+          </div>
+          </body>
+          </html>`;
+
       } else if (type === 'event_registration') {
         clientSubject = "Event Registration Confirmed - OneStop Application Services";
         clientHtml = `<!DOCTYPE html>
@@ -214,6 +262,83 @@ serve(async (req) => {
           </div>
           </body>
           </html>`;
+      } else if (type === 'rental_approval') {
+        clientSubject = "Rental Listing Approved! - OneStop Application Services";
+        clientHtml = `<!DOCTYPE html>
+          <html>
+          <head>
+          <meta charset="utf-8">
+          <style>
+              body { font-family: 'Lato', sans-serif; line-height: 1.6; color: #1A365D; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #1A365D, #00B5AD); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+              .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
+              .info-box { background: #F5F6FA; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #00B5AD; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+          </style>
+          </head>
+          <body>
+          <div class="container">
+              <div class="header" style="display:flex;align-items:center;gap:16px;">
+              <img src="${SENDER_LOGO_URL}" alt="OneStop logo" style="height:56px;width:auto;border-radius:6px;object-fit:contain;" />
+              <div>
+                  <h1 style="margin: 0; font-size: 22px;">Listing Approved!</h1>
+                  <p style="margin: 6px 0 0 0;font-size:14px;">OneStop Application Services LLC</p>
+              </div>
+              </div>
+              <div class="content">
+              <p>Dear ${name},</p>
+              <p><strong>Great news! Your rental listing has been approved and is now live on our website.</strong></p>
+              <div class="info-box">
+                  <p><strong>🏠 Listing:</strong> ${payload.listingTitle || 'Rental Listing'}</p>
+                  <p><strong>💵 Monthly Price:</strong> $${payload.listingPrice || 'N/A'}/mo</p>
+                  <p><strong>ℹ️ Status:</strong> Active & Public</p>
+              </div>
+              <p>You can view your listing on our public <a href="https://onestopasllc.com/rentals" target="_blank">Rentals Page</a>.</p>
+              <p>Best regards,<br><strong>The OneStop Team</strong></p>
+              </div>
+              <div class="footer"><p>© ${new Date().getFullYear()} OneStop Application Services LLC</p></div>
+          </div>
+          </body>
+          </html>`;
+      } else if (type === 'rental_rejection') {
+        clientSubject = "Rental Listing Update - OneStop Application Services";
+        clientHtml = `<!DOCTYPE html>
+          <html>
+          <head>
+          <meta charset="utf-8">
+          <style>
+              body { font-family: 'Lato', sans-serif; line-height: 1.6; color: #1A365D; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #1A365D, #ef4444); color: white; padding: 40px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+              .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
+              .info-box { background: #F5F6FA; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+          </style>
+          </head>
+          <body>
+          <div class="container">
+              <div class="header" style="display:flex;align-items:center;gap:16px;">
+              <img src="${SENDER_LOGO_URL}" alt="OneStop logo" style="height:56px;width:auto;border-radius:6px;object-fit:contain;" />
+              <div>
+                  <h1 style="margin: 0; font-size: 22px;">Listing Declined</h1>
+                  <p style="margin: 6px 0 0 0;font-size:14px;">OneStop Application Services LLC</p>
+              </div>
+              </div>
+              <div class="content">
+              <p>Dear ${name},</p>
+              <p>Thank you for submitting your rental listing. Unfortunately, we were unable to approve your listing at this time.</p>
+              <div class="info-box">
+                  <p><strong>🏠 Listing:</strong> ${payload.listingTitle || 'Rental Listing'}</p>
+                  <p><strong>ℹ️ Status:</strong> Declined</p>
+              </div>
+              <p>If you have any questions or would like to resubmit with corrected information, please feel free to reach out to us at <a href="mailto:Info@onestopasllc.com">Info@onestopasllc.com</a>.</p>
+              <p>Best regards,<br><strong>The OneStop Team</strong></p>
+              </div>
+              <div class="footer"><p>© ${new Date().getFullYear()} OneStop Application Services LLC</p></div>
+          </div>
+          </body>
+          </html>`;
       }
 
       if (clientHtml && to) {
@@ -238,10 +363,31 @@ serve(async (req) => {
 
       if (type === 'appointment') {
         internalSubject = `New Appointment: ${name}`;
-        internalHtml = `<p>New appointment from <strong>${name}</strong> (${to}) on <strong>${appointmentDate}</strong> at <strong>${appointmentTime}</strong></p><p>Services: ${(services || []).join(', ')}</p>`;
+        internalHtml = `<h2>New Appointment Booking</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${to}</p>
+          <p><strong>Phone:</strong> ${payload.phone || 'Not provided'}</p>
+          <p><strong>Date:</strong> ${appointmentDate}</p>
+          <p><strong>Time:</strong> ${appointmentTime}</p>
+          <p><strong>Services:</strong> ${(services || []).join(', ')}</p>
+          <p><strong>Location:</strong> ${payload.city || ''}, ${payload.state || ''}, ${payload.location || ''}</p>
+          <p><strong>Contact Method:</strong> ${payload.contact_method || 'N/A'}</p>
+          ${payload.description ? `<p><strong>Notes:</strong> ${payload.description}</p>` : ''}
+          ${payload.how_heard ? `<p><strong>How Heard:</strong> ${payload.how_heard}</p>` : ''}`;
       } else if (type === 'rental_subscription') {
         internalSubject = `New Rental Subscription: ${payload.listingTitle || 'Untitled'}`;
         internalHtml = `<h2>New Rental Subscription</h2><p><strong>User:</strong> ${name} (${to})</p><p><strong>Listing:</strong> ${payload.listingTitle}</p>`;
+      } else if (type === 'rental_submission') {
+        internalSubject = `New Rental Listing Submitted: ${payload.listingTitle || 'Untitled'}`;
+        internalHtml = `<h2>New Rental Listing – Needs Review</h2>
+          <p><strong>Submitted By:</strong> ${name}</p>
+          <p><strong>Contact Email:</strong> ${to}</p>
+          <p><strong>Contact Phone:</strong> ${payload.contactPhone || 'Not provided'}</p>
+          <p><strong>Listing Title:</strong> ${payload.listingTitle || 'N/A'}</p>
+          <p><strong>Address:</strong> ${payload.listingAddress || 'N/A'}</p>
+          <p><strong>Price:</strong> $${payload.listingPrice || 'N/A'}/mo</p>
+          <p><strong>Property Type:</strong> ${payload.propertyType || 'N/A'}</p>
+          <p style="color:#b45309;"><strong>⚠️ Please log in to the Admin Dashboard to review and approve or reject this listing.</strong></p>`;
       } else if (type === 'event_registration') {
         internalSubject = `New Event Registration: ${name}`;
         internalHtml = `<h2>New Event Registration</h2><p><strong>User:</strong> ${name} (${to})</p><p><strong>Phone:</strong> ${payload.phoneNumber || 'N/A'}</p><p><strong>Interests:</strong> ${(payload.areasOfInterest || []).join(', ')}</p>`;

@@ -24,9 +24,11 @@ serve(async (req) => {
     }
 
     let bookingData;
+    let isMobile = false;
     try {
       const body = JSON.parse(requestBody);
       bookingData = body.bookingData;
+      isMobile = !!body.isMobile;
       console.log("Parsed bookingData:", bookingData ? "present" : "missing");
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
@@ -104,6 +106,14 @@ serve(async (req) => {
     };
 
     // Create checkout session with booking data in metadata
+    const successUrl = isMobile 
+      ? `onestopasllc://payment-success?session_id={CHECKOUT_SESSION_ID}&type=appointment`
+      : `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}`;
+      
+    const cancelUrl = isMobile
+      ? `onestopasllc://payment-cancel`
+      : `${origin}/appointment`;
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -119,8 +129,8 @@ serve(async (req) => {
         }
       ],
       mode: "payment",
-      success_url: `${origin}/appointment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/appointment`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       // Store booking data in metadata for webhook processing
       metadata: {
         type: "appointment_booking",

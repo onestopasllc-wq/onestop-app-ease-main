@@ -1,5 +1,6 @@
 //pages/Appointment.tsx
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, Upload, CheckCircle2, Clock, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -89,6 +90,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function Appointment() {
+  const navigate = useNavigate();
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -263,12 +265,11 @@ export default function Appointment() {
   const onSubmit = async (data: FormData) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    let shouldResetSubmitting = true;
 
     try {
       let fileUrl = null;
 
-      // Step 1: Upload file if exists (keep existing upload logic)
+      // Step 1: Upload file if provided
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -287,50 +288,47 @@ export default function Appointment() {
         fileUrl = urlData.publicUrl;
       }
 
-      // Step 2: Create Stripe checkout with booking data in metadata
-      // DO NOT create appointment record here - webhook will do that after payment
-      const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
-        'create-checkout',
+      // Step 2: Submit booking directly (no payment required)
+      const { data: result, error: bookingError } = await supabase.functions.invoke(
+        'submit-booking',
         {
           body: {
-            bookingData: {
-              full_name: data.fullName,
-              email: data.email,
-              phone: data.phone || null,
-              contact_method: data.contactMethod,
-              location: data.location,
-              state: data.state,
-              city: data.city,
-              services: data.services,
-              description: data.description || null,
-              appointment_date: format(data.appointmentDate, 'yyyy-MM-dd'),
-              appointment_time: data.appointmentTime,
-              file_url: fileUrl,
-              how_heard: data.howHeard || null,
-            }
+            full_name: data.fullName,
+            email: data.email,
+            phone: data.phone || null,
+            contact_method: data.contactMethod,
+            location: data.location,
+            state: data.state,
+            city: data.city,
+            services: data.services,
+            description: data.description || null,
+            appointment_date: format(data.appointmentDate, 'yyyy-MM-dd'),
+            appointment_time: data.appointmentTime,
+            file_url: fileUrl,
+            how_heard: data.howHeard || null,
           },
         }
       );
 
-      if (checkoutError) throw checkoutError;
+      if (bookingError) throw bookingError;
+      if (!result?.success) throw new Error(result?.error || 'Booking failed');
 
-      if (checkoutData?.url) {
-        // Redirect to Stripe (not opening in new tab for better UX)
-        shouldResetSubmitting = false;
-        window.location.href = checkoutData.url;
-      }
+      toast({
+        title: "Booking Confirmed!",
+        description: "A confirmation email has been sent to you.",
+      });
+
+      // Redirect to success page with appointment ID
+      navigate(`/appointment-success?id=${result.appointmentId}`);
 
     } catch (error: any) {
-      console.error('Error creating checkout:', error);
+      console.error('Error submitting booking:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to proceed to payment",
+        description: error.message || "Failed to submit booking. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      if (shouldResetSubmitting) {
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
@@ -338,7 +336,7 @@ export default function Appointment() {
     <>
       <SEO
         title="Book Appointment - Get Expert Application Support"
-        description="Book your consultation with OneStop Application Services LLC. Secure your spot with a $75 deposit and get expert guidance for your application process."
+        description="Book your consultation with OneStop Application Services LLC and get expert guidance for your application process."
       />
       <Navbar />
       <div className="min-h-screen relative overflow-hidden pt-20 pb-16">
@@ -361,7 +359,7 @@ export default function Appointment() {
                 Book Your Appointment
               </h1>
               <p className="text-muted-foreground text-base max-w-xl mx-auto">
-                Fill out the form below and secure your spot with a $75 deposit
+                Fill out the form below to book your consultation
               </p>
             </motion.div>
 
@@ -768,11 +766,11 @@ export default function Appointment() {
                                 <h4 className="font-bold text-primary">1. Nature of Services</h4>
                                 <p>OneStop Application Services LLC provides non-legal professional assistance with various application processes. We are NOT a law firm and do not provide legal advice, legal opinions, or legal representation. Our services are limited to guidance, form preparation, and administrative support.</p>
                                 
-                                <h4 className="font-bold text-primary">2. Appointment Deposit</h4>
-                                <p>A non-refundable deposit of $75 is required to secure your appointment. This deposit covers the initial consultation and will be applied toward your final service fee. Payment is processed securely via Stripe.</p>
+                                <h4 className="font-bold text-primary">2. Appointment Booking</h4>
+                                <p>OneStop Application Services LLC reserves the right to introduce service fees in the future with prior notice.</p>
                                 
                                 <h4 className="font-bold text-primary">3. Cancellation & Rescheduling</h4>
-                                <p>Appointments may be rescheduled up to 24 hours in advance without penalty. Cancellations made less than 24 hours before the scheduled time or "no-shows" will result in the forfeiture of the $75 deposit.</p>
+                                <p>Appointments may be rescheduled up to 24 hours in advance without penalty. Please notify us as soon as possible if you need to cancel or reschedule your appointment.</p>
                                 
                                 <h4 className="font-bold text-primary">4. Accuracy of Information</h4>
                                 <p>The applicant is solely responsible for the accuracy and completeness of all information provided to OneStop Application Services LLC and for the final review of any application before submission. We are not liable for delays or denials caused by incorrect or incomplete information.</p>
@@ -836,7 +834,7 @@ export default function Appointment() {
                         ) : (
                           <>
                             <CheckCircle2 className="mr-2 h-5 w-5" />
-                            Complete Booking - $75 Deposit
+                            Book Appointment
                           </>
                         )}
                       </Button>

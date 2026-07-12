@@ -74,6 +74,24 @@ export const RentalAdmin = () => {
 
             if (error) throw error;
 
+            // Send notification email to the user
+            const listing = listings.find(l => l.id === id);
+            if (listing) {
+                try {
+                    await supabase.functions.invoke('send-confirmation-email', {
+                        body: {
+                            type: newStatus === 'approved' ? 'rental_approval' : 'rental_rejection',
+                            to: listing.contact_email,
+                            name: listing.contact_name,
+                            listingTitle: listing.title,
+                            listingPrice: listing.price,
+                        }
+                    });
+                } catch (emailErr) {
+                    console.error('Failed to send status update email:', emailErr);
+                }
+            }
+
             setListings(listings.map(l => l.id === id ? { ...l, status: newStatus } : l));
 
             if (newStatus === 'approved') toast.success("Listing approved");

@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Upload, Home, check, DollarSign, Image as ImageIcon, X } from "lucide-react";
+import { Loader2, Upload, Home, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // Zod Schema for validationp
@@ -136,55 +136,62 @@ export const RentalForm = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 toast.error("You must be logged in to post a rental");
+                setSaving(false);
                 return;
             }
 
-            // Skip database insertion step and go straight to payment
-            await handlePayment({
-                ...data,
-                images: uploadedImages,
-                user_id: user.id,
-                features: selectedFeatures
-            });
+            // Insert listing directly into the database (no payment required)
+            const { data: listing, error: insertError } = await (supabase
+                .from("rental_listings" as any)
+                .insert({
+                    user_id: user.id,
+                    title: data.title,
+                    description: data.description,
+                    address: data.address,
+                    property_type: data.property_type,
+                    price: data.price,
+                    features: selectedFeatures,
+                    contact_name: data.contact_name,
+                    contact_phone: data.contact_phone,
+                    contact_email: data.contact_email,
+                    images: uploadedImages,
+                    status: 'pending_approval',
+                    payment_status: 'pending',
+                })
+                .select()
+                .single() as any);
 
-        } catch (error: any) {
-            toast.error("Failed to initiate process: " + error.message);
-            setSaving(false);
-        }
-    };
+            if (insertError) throw insertError;
 
-    const handlePayment = async (listingData: any) => {
-        try {
-            toast.info("Redirecting to secure payment...");
-
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error("No active session");
-
-            const { data, error } = await supabase.functions.invoke('create-rental-checkout', {
-                body: {
-                    listingData: {
-                        ...listingData,
-                        user_id: session.user.id,
-                        features: selectedFeatures
+            // Send notification emails
+            try {
+                await supabase.functions.invoke('send-confirmation-email', {
+                    body: {
+                        type: 'rental_submission',
+                        to: data.contact_email,
+                        name: data.contact_name,
+                        listingTitle: data.title,
+                        listingPrice: data.price,
+                        listingAddress: data.address,
+                        propertyType: data.property_type,
+                        contactPhone: data.contact_phone,
                     }
-                }
-            });
-
-            if (error) throw error;
-            if (data?.error) throw new Error(data.error);
-
-            if (data?.url) {
-                window.location.href = data.url;
-            } else {
-                throw new Error("No checkout URL returned");
+                });
+            } catch (emailErr) {
+                // Non-fatal: don't block success if email fails
+                console.error('Email notification failed:', emailErr);
             }
 
+            toast.success("Listing submitted! We'll review it shortly and notify you by email.");
+            navigate('/dashboard/rentals');
+
         } catch (error: any) {
-            console.error("Payment error:", error);
-            toast.error("Failed to initiate payment: " + error.message);
+            toast.error("Failed to submit listing: " + error.message);
             setSaving(false);
         }
     };
+
+
 
 
     return (
@@ -207,12 +214,12 @@ export const RentalForm = () => {
                     <CardTitle>
                         {step === 1 && "Property Details"}
                         {step === 2 && "Photos & Media"}
-                        {step === 3 && "Review & Pay"}
+                        {step === 3 && "Review & Submit"}
                     </CardTitle>
                     <CardDescription>
                         {step === 1 && "Start by providing the basic information about your rental property."}
                         {step === 2 && "High-quality photos increase your chances of finding a tenant."}
-                        {step === 3 && "Confirm your details and proceed to payment ($25.00 USD)."}
+                        {step === 3 && "Review your listing details before submitting for admin approval."}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -384,27 +391,16 @@ export const RentalForm = () => {
                                             <span className="text-muted-foreground block">Address</span>
                                             {watch("address")}
                                         </div>
+                                        <div className="col-span-2">
+                                            <span className="text-muted-foreground block">Contact</span>
+                                            {watch("contact_name")} · {watch("contact_phone")} · {watch("contact_email")}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="border bg-card p-6 rounded-lg shadow-sm">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <div>
-                                            <h3 className="font-semibold text-lg">Listing Subscription</h3>
-                                            <p className="text-sm text-muted-foreground">Monthly subscription for premium placement</p>
-                                        </div>
-                                        <div className="text-2xl font-bold">$25.00<span className="text-sm font-normal text-muted-foreground">/mo</span></div>
-                                    </div>
-
-                                    <div className="bg-primary/5 p-4 rounded-md border border-primary/20 mb-4">
-                                        <div className="flex gap-3">
-                                            <DollarSign className="text-primary h-5 w-5 shrink-0" />
-                                            <div className="text-sm">
-                                                <p className="font-medium text-primary">Secure Payment via Stripe</p>
-                                                <p className="text-muted-foreground mt-1">This is a recurring monthly subscription of $25.00 USD. You can cancel anytime from your dashboard.</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div className="bg-primary/5 p-4 rounded-md border border-primary/20">
+                                    <p className="text-sm text-primary font-medium">📋 Submission Review</p>
+                                    <p className="text-sm text-muted-foreground mt-1">Your listing will be reviewed by our team before going live. You'll receive an email confirmation and another notification once approved.</p>
                                 </div>
                             </motion.div>
                         )}
@@ -424,8 +420,8 @@ export const RentalForm = () => {
                             Next
                         </Button>
                     ) : (
-                        <Button onClick={handleSubmit(onSubmit)} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Pay & Publish"}
+                        <Button onClick={handleSubmit(onSubmit)} disabled={saving} className="bg-primary hover:bg-primary/90">
+                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Submit Listing"}
                         </Button>
                     )}
                 </CardFooter>

@@ -109,7 +109,7 @@ interface BlockedDate {
 interface Stats {
   today_count: number;
   upcoming_count: number;
-  paid_count: number;
+  total_bookings_count: number;
   event_registrations_count: number;
   total_revenue: number;
 }
@@ -157,7 +157,7 @@ const Admin = () => {
   const [filterDate, setFilterDate] = useState<string>("");
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
-  const [stats, setStats] = useState<Stats>({ today_count: 0, upcoming_count: 0, paid_count: 0, event_registrations_count: 0, total_revenue: 0 });
+  const [stats, setStats] = useState<Stats>({ today_count: 0, upcoming_count: 0, total_bookings_count: 0, event_registrations_count: 0, total_revenue: 0 });
   const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [newBlockedDate, setNewBlockedDate] = useState("");
@@ -269,7 +269,7 @@ const Admin = () => {
     const stats: Stats = {
       today_count: data.filter(apt => apt.appointment_date === today).length,
       upcoming_count: data.filter(apt => apt.appointment_date > today).length,
-      paid_count: data.filter(apt => apt.payment_status === 'paid').length,
+      total_bookings_count: data.length,
       event_registrations_count: eventCount || 0,
       total_revenue: (data.filter(apt => apt.payment_status === 'paid').length * 75) + ((eventCount || 0) * 30)
     };
@@ -654,7 +654,7 @@ const Admin = () => {
                   <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-green-500/20 via-green-500/10 to-transparent backdrop-blur-sm shadow-lg card-glow group">
                     <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">Paid Bookings</CardTitle>
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Total Bookings</CardTitle>
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
@@ -663,8 +663,8 @@ const Admin = () => {
                       </motion.div>
                     </CardHeader>
                     <CardContent className="relative z-10">
-                      <div className="text-4xl font-bold bg-gradient-to-br from-green-600 to-green-400 bg-clip-text text-transparent">{stats.paid_count}</div>
-                      <p className="text-xs text-muted-foreground mt-2">Confirmed payments</p>
+                      <div className="text-4xl font-bold bg-gradient-to-br from-green-600 to-green-400 bg-clip-text text-transparent">{stats.total_bookings_count}</div>
+                      <p className="text-xs text-muted-foreground mt-2">All appointments</p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -1292,8 +1292,8 @@ const Admin = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/3 via-transparent to-primary/3 pointer-events-none" />
                   <CardHeader className="relative z-10">
                     <CardTitle className="text-foreground flex items-center gap-2">
-                       <Briefcase className="h-5 w-5 text-purple-600" />
-                       Event Registrations
+                      <Briefcase className="h-5 w-5 text-purple-600" />
+                      Event Registrations
                     </CardTitle>
                     <CardDescription>View all event attendees and registration details</CardDescription>
                   </CardHeader>
@@ -1314,8 +1314,8 @@ const Admin = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-secondary/3 pointer-events-none" />
                   <CardHeader className="relative z-10">
                     <CardTitle className="text-foreground flex items-center gap-2">
-                       <Settings2 className="h-5 w-5 text-primary" />
-                       Event Control Center
+                      <Settings2 className="h-5 w-5 text-primary" />
+                      Event Control Center
                     </CardTitle>
                     <CardDescription>Manage event status, deadlines, and visibility</CardDescription>
                   </CardHeader>

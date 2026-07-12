@@ -20,10 +20,12 @@ serve(async (req) => {
 
         const requestBody = await req.text();
         let listingData;
+        let isMobile = false;
 
         try {
             const body = JSON.parse(requestBody);
             listingData = body.listingData;
+            isMobile = !!body.isMobile;
             console.log("Parsed listingData present:", !!listingData);
         } catch (parseError) {
             console.error("JSON parse error:", parseError);
@@ -66,6 +68,14 @@ serve(async (req) => {
 
         console.log("Creating Stripe subscription checkout session...");
 
+        const successUrl = isMobile 
+            ? `onestopasllc://payment-success?session_id={CHECKOUT_SESSION_ID}&type=rental`
+            : `${origin}/dashboard/listings?session_id={CHECKOUT_SESSION_ID}&success=true`;
+            
+        const cancelUrl = isMobile
+            ? `onestopasllc://payment-cancel`
+            : `${origin}/dashboard/rentals/new`;
+
         // Create checkout session for subscription
         const session = await stripe.checkout.sessions.create({
             line_items: [
@@ -85,8 +95,8 @@ serve(async (req) => {
                 },
             ],
             mode: "subscription", // Recurring payment
-            success_url: `${origin}/dashboard/listings?session_id={CHECKOUT_SESSION_ID}&success=true`,
-            cancel_url: `${origin}/dashboard/rentals/new`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             metadata,
             customer_email: listingData.contact_email, // Prefill if available
         });
