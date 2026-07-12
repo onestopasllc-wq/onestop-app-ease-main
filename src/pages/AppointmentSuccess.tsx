@@ -168,7 +168,7 @@ export default function AppointmentSuccess() {
               <div className="absolute inset-0 h-16 w-16 border-4 border-primary/20 rounded-full mx-auto animate-pulse"></div>
             </div>
             <h2 className="text-2xl font-semibold mb-2">Confirming Your Appointment</h2>
-            <p className="text-muted-foreground">{appointment.isDirectBooking ? 'Confirming your appointment...' : 'Processing your payment and creating your booking...'}</p>
+            <p className="text-muted-foreground">{appointment?.isDirectBooking ? 'Confirming your appointment...' : 'Processing your payment and creating your booking...'}</p>
             <p className="text-sm text-muted-foreground mt-2">This may take a few seconds</p>
           </motion.div>
         </div>
